@@ -1,4 +1,4 @@
-# OneNote to Excel Converter
+# OneNote Groomer
 
 A powerful Flutter application that converts OneNote files to Excel format using AI processing with Ollama/Llama2. This tool extracts raw content from OneNote files and intelligently structures it according to user-provided templates or custom prompts.
 
