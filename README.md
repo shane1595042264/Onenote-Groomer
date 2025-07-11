@@ -19,6 +19,7 @@ A powerful Flutter application that converts OneNote files to Excel format using
 ## Features
 
 - **OneNote File Processing**: Extracts content from .one and .onepkg files
+- **Excel File Processing**: 🆕 Restructures messy Excel data using AI column mapping
 - **AI-Powered Structuring**: Uses Ollama/Llama2 to intelligently organize data
 - **Custom Prompts**: Define your own extraction criteria and output structure
 - **Excel Template Support**: Use existing Excel templates as formatting guides
@@ -58,19 +59,32 @@ A powerful Flutter application that converts OneNote files to Excel format using
 
 ## Usage
 
+### OneNote Processing
 1. **Launch the application**
 2. **Drop or select a OneNote file** (.one or .onepkg)
-3. **Choose processing method**:
-   - Use a custom prompt to define what data to extract
-   - Upload an Excel template to match its structure
-4. **Click "Process OneNote File"** to start extraction
-5. **Review and export** the results to Excel
-6. **Use built-in buttons** to open the result or save to another location
+3. **Optionally upload an Excel template** to match its structure
+4. **Customize the prompt** to define what data to extract
+5. **Click "Process OneNote File"** to start extraction
+6. **Review and export** the results to Excel
+
+### Excel Processing 🆕
+1. **Launch the application**
+2. **Drop or select an Excel file** (.xlsx or .xls) with messy/unstructured data
+3. **Review the data preview** showing columns and sample data
+4. **Customize the prompt** to define how to restructure the data
+5. **Click "Process Excel File"** to start AI-powered column mapping
+6. **Export the cleaned data** to a new Excel file
+
+### File Management
+- **Use built-in buttons** to open the result or save to another location
+- **Drag and drop** support for easy file selection
+- **Preview data** before processing to understand the structure
 
 ## Custom Prompts
 
-The application supports custom prompts to define exactly what data to extract. Example:
+The application supports custom prompts to define exactly what data to extract or how to restructure it.
 
+### OneNote Extraction Example:
 ```
 Extract business data from OneNote pages. Focus on:
 - Company/Client name
@@ -80,6 +94,18 @@ Extract business data from OneNote pages. Focus on:
 - Contact details
 - Status or outcomes
 - Any follow-up items
+```
+
+### Excel Restructuring Example: 🆕
+```
+Restructure this messy Excel data by mapping columns to:
+- Contact names (first name, last name, full name)
+- Email addresses (work, personal)
+- Phone numbers (mobile, office)
+- Company information
+- Job titles or positions
+- Addresses (business, personal)
+- Clean and standardize the format
 ```
 
 ## Technical Details

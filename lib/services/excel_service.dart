@@ -362,4 +362,176 @@ class ExcelService {
     }
     _openFiles.clear();
   }
+
+  /// Read and analyze Excel file for data mapping and processing
+  Future<Map<String, dynamic>> readExcelFile(String filePath) async {
+    RandomAccessFile? file;
+
+    try {
+      file = await File(filePath).open();
+      _openFiles.add(file);
+
+      final length = await file.length();
+      final bytes = await file.read(length);
+
+      final excel = Excel.decodeBytes(bytes);
+
+      // Get the first sheet (or allow user to select later)
+      final sheetName = excel.tables.keys.first;
+      final sheet = excel.tables[sheetName];
+      if (sheet == null) {
+        throw Exception('No data found in Excel file');
+      }
+
+      // Extract headers (first row)
+      final rows = sheet.rows;
+      if (rows.isEmpty) {
+        throw Exception('Excel file is empty');
+      }
+
+      final headers = rows.first.map((cell) => 
+          _cleanExcelValue(cell?.value ?? '')).where((h) => h.isNotEmpty).toList();
+      
+      if (headers.isEmpty) {
+        throw Exception('No headers found in Excel file');
+      }
+
+      // Extract data rows
+      final dataRows = <Map<String, dynamic>>[];
+      for (int i = 1; i < rows.length; i++) {
+        final row = rows[i];
+        final rowData = <String, dynamic>{};
+        
+        for (int j = 0; j < headers.length && j < row.length; j++) {
+          final cellValue = row[j]?.value;
+          final cleanValue = _cleanExcelValue(cellValue);
+          if (cleanValue.isNotEmpty) {
+            rowData[headers[j]] = cleanValue;
+          }
+        }
+        
+        // Only add rows that have some data
+        if (rowData.isNotEmpty) {
+          dataRows.add(rowData);
+        }
+      }
+
+      return {
+        'filePath': filePath,
+        'sheetName': sheetName,
+        'headers': headers,
+        'totalRows': dataRows.length,
+        'sampleData': dataRows.take(5).toList(), // First 5 rows for preview
+        'allData': dataRows,
+        'columns': headers.length,
+      };
+
+    } catch (e) {
+      print('Error reading Excel file: $e');
+      throw Exception('Failed to read Excel file: $e');
+    } finally {
+      if (file != null) {
+        await _closeFile(file);
+      }
+    }
+  }
+
+  /// Analyze Excel data and suggest column mappings based on content
+  Map<String, List<String>> analyzeExcelColumns(Map<String, dynamic> excelData) {
+    final headers = excelData['headers'] as List<String>;
+    final sampleData = excelData['sampleData'] as List<Map<String, dynamic>>;
+    
+    final columnAnalysis = <String, List<String>>{};
+    
+    for (final header in headers) {
+      final suggestions = <String>[];
+      final headerLower = header.toLowerCase();
+      final sampleValues = sampleData
+          .map((row) => row[header]?.toString() ?? '')
+          .where((value) => value.isNotEmpty)
+          .take(3)
+          .toList();
+      
+      // Analyze header name patterns
+      if (headerLower.contains('name') || headerLower.contains('client') || 
+          headerLower.contains('company') || headerLower.contains('business')) {
+        suggestions.add('Company/Client name');
+      }
+      
+      if (headerLower.contains('date') || headerLower.contains('time') ||
+          headerLower.contains('created') || headerLower.contains('modified')) {
+        suggestions.add('Date and time information');
+      }
+      
+      if (headerLower.contains('email') || headerLower.contains('mail')) {
+        suggestions.add('Email addresses');
+      }
+      
+      if (headerLower.contains('phone') || headerLower.contains('mobile') ||
+          headerLower.contains('tel') || headerLower.contains('contact')) {
+        suggestions.add('Phone numbers');
+      }
+      
+      if (headerLower.contains('address') || headerLower.contains('location') ||
+          headerLower.contains('city') || headerLower.contains('street')) {
+        suggestions.add('Addresses');
+      }
+      
+      if (headerLower.contains('amount') || headerLower.contains('price') ||
+          headerLower.contains('cost') || headerLower.contains('budget') ||
+          headerLower.contains('fee') || headerLower.contains('total')) {
+        suggestions.add('Financial information');
+      }
+      
+      if (headerLower.contains('status') || headerLower.contains('state') ||
+          headerLower.contains('stage') || headerLower.contains('progress')) {
+        suggestions.add('Status or outcomes');
+      }
+      
+      if (headerLower.contains('action') || headerLower.contains('task') ||
+          headerLower.contains('todo') || headerLower.contains('follow')) {
+        suggestions.add('Action items');
+      }
+      
+      if (headerLower.contains('note') || headerLower.contains('comment') ||
+          headerLower.contains('description') || headerLower.contains('detail')) {
+        suggestions.add('Notes or comments');
+      }
+      
+      // Analyze sample data patterns
+      if (sampleValues.isNotEmpty) {
+        final firstValue = sampleValues.first.toLowerCase();
+        
+        // Check for email patterns
+        if (firstValue.contains('@') && firstValue.contains('.')) {
+          suggestions.add('Email addresses');
+        }
+        
+        // Check for phone number patterns
+        if (RegExp(r'[\d\s\-\(\)]+').hasMatch(firstValue) && firstValue.length > 8) {
+          suggestions.add('Phone numbers');
+        }
+        
+        // Check for date patterns
+        if (RegExp(r'\d{1,4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,4}').hasMatch(firstValue)) {
+          suggestions.add('Date and time information');
+        }
+        
+        // Check for currency patterns
+        if (RegExp(r'[\$£€¥]\d+|\d+\.\d{2}').hasMatch(firstValue)) {
+          suggestions.add('Financial information');
+        }
+      }
+      
+      // Remove duplicates and add generic suggestion if none found
+      final uniqueSuggestions = suggestions.toSet().toList();
+      if (uniqueSuggestions.isEmpty) {
+        uniqueSuggestions.add('General data field');
+      }
+      
+      columnAnalysis[header] = uniqueSuggestions;
+    }
+    
+    return columnAnalysis;
+  }
 }
