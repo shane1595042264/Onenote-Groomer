@@ -1,0 +1,8 @@
+﻿OneNote Groomer v1.0.0
+Built on: 2025-07-11 09:25:06
+Flutter Version: 
+Flutter 3.24.5 鈥?channel stable 鈥?https://github.com/flutter/flutter.git
+
+
+.Trim()
+Platform: Windows x64
