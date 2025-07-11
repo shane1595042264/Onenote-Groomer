@@ -2,6 +2,20 @@
 
 A powerful Flutter application that converts OneNote files to Excel format using AI processing with Ollama/Llama2. This tool extracts raw content from OneNote files and intelligently structures it according to user-provided templates or custom prompts.
 
+## 📥 Download
+
+**[⬇️ Download OneNote Groomer v1.0.0 for Windows](https://github.com/YOUR_USERNAME/onenote-to-excel/releases/latest)**
+
+- **File**: `OneNote-Groomer-Windows-v1.0.0.zip` (10.8 MB)
+- **Includes**: Complete application + Setup guides + Quick installer
+- **Requirements**: Windows 10/11, 4GB+ RAM
+
+### Quick Start for End Users
+1. Download and extract the ZIP file
+2. Run `Quick Setup.bat` (installs AI dependencies)
+3. Run `Start OneNote Groomer.bat` to launch
+4. Drag your OneNote file and process!
+
 ## Features
 
 - **OneNote File Processing**: Extracts content from .one and .onepkg files

@@ -1,0 +1,16 @@
+@echo off
+echo Starting OneNote Groomer...
+echo.
+echo Checking if Ollama is running...
+tasklist /FI "IMAGENAME eq ollama.exe" 2>NUL | find /I /N "ollama.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+    echo Ollama is running. Starting OneNote Groomer...
+) else (
+    echo Starting Ollama service...
+    start /B ollama serve
+    timeout /t 3 /nobreak >nul
+)
+
+echo.
+echo Launching OneNote Groomer...
+start "" "onenote_to_excel.exe"
