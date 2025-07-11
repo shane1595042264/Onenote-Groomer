@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../widgets/file_drop_zone.dart';
 import '../widgets/prompt_editor.dart';
 import '../widgets/processing_status.dart';
+import '../widgets/hoverable_button.dart';
 import '../services/onenote_service.dart' as onenote;
 import '../services/ollama_service.dart' as ollama;
 import '../services/excel_service.dart' as excel;
@@ -26,6 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
   ExcelTemplate? _excelTemplate;
   Map<String, dynamic>? _excelInputData;  // New: Analyzed Excel data
   bool _isLoadingExcelInput = false;  // New: Loading state for Excel file
+  
+  // Hover states for containers
+  bool _isHoveringOneNoteInfo = false;
+  bool _isHoveringExcelInfo = false;
+  bool _isHoveringExcelPreview = false;
   
   String _customPrompt = '''
 Extract and restructure data focusing on:
@@ -112,6 +118,11 @@ Map the existing columns to these requested fields.
                           _excelInputData = null;
                         });
                       },
+                      onFileCancelled: () {
+                        setState(() {
+                          _oneNoteFilePath = null;
+                        });
+                      },
                       filePath: _oneNoteFilePath,
                     ),
                   ),
@@ -145,6 +156,13 @@ Map the existing columns to these requested fields.
                         // Then load the Excel data
                         await _loadExcelInput(path);
                       },
+                      onFileCancelled: () {
+                        setState(() {
+                          _excelInputFilePath = null;
+                          _excelInputData = null;
+                          _isLoadingExcelInput = false;
+                        });
+                      },
                       filePath: _excelInputFilePath,
                     ),
                   ),
@@ -158,13 +176,25 @@ Map the existing columns to these requested fields.
                   children: [
                     if (_oneNoteFilePath != null) 
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                          ),
+                        child: MouseRegion(
+                          onEnter: (_) => setState(() => _isHoveringOneNoteInfo = true),
+                          onExit: (_) => setState(() => _isHoveringOneNoteInfo = false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(_isHoveringOneNoteInfo ? 0.15 : 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue.withOpacity(_isHoveringOneNoteInfo ? 0.5 : 0.3)),
+                              boxShadow: _isHoveringOneNoteInfo ? [
+                                BoxShadow(
+                                  color: Colors.blue.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ] : null,
+                            ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -189,6 +219,7 @@ Map the existing columns to these requested fields.
                             ],
                           ),
                         ),
+                        ),
                       )
                     else 
                       const Expanded(child: SizedBox()),
@@ -198,13 +229,25 @@ Map the existing columns to these requested fields.
                     
                     if (_excelInputFilePath != null)
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
+                        child: MouseRegion(
+                          onEnter: (_) => setState(() => _isHoveringExcelInfo = true),
+                          onExit: (_) => setState(() => _isHoveringExcelInfo = false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(_isHoveringExcelInfo ? 0.15 : 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green.withOpacity(_isHoveringExcelInfo ? 0.5 : 0.3)),
+                              boxShadow: _isHoveringExcelInfo ? [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ] : null,
+                            ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -272,6 +315,7 @@ Map the existing columns to these requested fields.
                             ],
                           ),
                         ),
+                        ),
                       )
                     else 
                       const Expanded(child: SizedBox()),
@@ -308,6 +352,12 @@ Map the existing columns to these requested fields.
                   });
                   await _loadExcelTemplate(path);
                 },
+                onFileCancelled: () {
+                  setState(() {
+                    _excelTemplatePath = null;
+                    _excelTemplate = null;
+                  });
+                },
                 filePath: _excelTemplatePath,
               ),
               const SizedBox(height: 24),
@@ -323,13 +373,25 @@ Map the existing columns to these requested fields.
                   ),
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3C3C3C),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white24),
-                  ),
+                MouseRegion(
+                  onEnter: (_) => setState(() => _isHoveringExcelPreview = true),
+                  onExit: (_) => setState(() => _isHoveringExcelPreview = false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _isHoveringExcelPreview ? const Color(0xFF454545) : const Color(0xFF3C3C3C),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _isHoveringExcelPreview ? Colors.white38 : Colors.white24),
+                      boxShadow: _isHoveringExcelPreview ? [
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ] : null,
+                    ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -350,6 +412,7 @@ Map the existing columns to these requested fields.
                       ),
                     ],
                   ),
+                ),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -381,18 +444,18 @@ Map the existing columns to these requested fields.
                 ),
               const SizedBox(height: 24),
               // Process Button
-              ElevatedButton(
+              HoverableButton(
                 onPressed: (_oneNoteFilePath != null || _excelInputFilePath != null) && !_isProcessing
                     ? _processFile
                     : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  backgroundColor: const Color(0xFF9B59B6),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                backgroundColor: const Color(0xFF9B59B6),
+                hoverColor: const Color(0xFFB866D9),
+                foregroundColor: Colors.white,
+                hoverForegroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                borderRadius: BorderRadius.circular(12),
+                elevation: 4,
+                hoverElevation: 8,
                 child: Text(
                   _isProcessing 
                     ? 'Processing...' 
@@ -410,34 +473,38 @@ Map the existing columns to these requested fields.
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: HoverableButton(
                         onPressed: _openExcelFile,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: const Color(0xFF27AE60),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.open_in_new),
-                        label: const Text('Open Excel'),
+                        backgroundColor: const Color(0xFF27AE60),
+                        hoverColor: const Color(0xFF2ECC71),
+                        foregroundColor: Colors.white,
+                        hoverForegroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        borderRadius: BorderRadius.circular(12),
+                        elevation: 4,
+                        hoverElevation: 8,
+                        isIcon: true,
+                        icon: Icons.open_in_new,
+                        label: 'Open Excel',
+                        child: const Text('Open Excel'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: HoverableButton(
                         onPressed: _saveAsExcelFile,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: const Color(0xFF3498DB),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.save_as),
-                        label: const Text('Save As'),
+                        backgroundColor: const Color(0xFF3498DB),
+                        hoverColor: const Color(0xFF5DADE2),
+                        foregroundColor: Colors.white,
+                        hoverForegroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        borderRadius: BorderRadius.circular(12),
+                        elevation: 4,
+                        hoverElevation: 8,
+                        isIcon: true,
+                        icon: Icons.save_as,
+                        label: 'Save As',
+                        child: const Text('Save As'),
                       ),
                     ),
                   ],
@@ -486,7 +553,7 @@ Map the existing columns to these requested fields.
             title: const Text('Error'),
             content: Text('Failed to read Excel file: $e'),
             actions: [
-              TextButton(
+              HoverableTextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),
@@ -616,23 +683,27 @@ Map the existing columns to these requested fields.
           title: const Text('Success!'),
           content: Text('Data ${_excelInputFilePath != null ? "restructured" : "extracted"} successfully!\n\nOutput file: $outputPath'),
           actions: [
-            TextButton.icon(
+            HoverableTextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _openExcelFile();
               },
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Open Excel'),
+              isIcon: true,
+              icon: Icons.open_in_new,
+              label: 'Open Excel',
+              child: const Text('Open Excel'),
             ),
-            TextButton.icon(
+            HoverableTextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _saveAsExcelFile();
               },
-              icon: const Icon(Icons.save_as),
-              label: const Text('Save As'),
+              isIcon: true,
+              icon: Icons.save_as,
+              label: 'Save As',
+              child: const Text('Save As'),
             ),
-            TextButton(
+            HoverableTextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
             ),
@@ -650,7 +721,7 @@ Map the existing columns to these requested fields.
           title: const Text('Error'),
           content: Text(e.toString()),
           actions: [
-            TextButton(
+            HoverableTextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
             ),
@@ -710,7 +781,7 @@ Map the existing columns to these requested fields.
             title: const Text('Error'),
             content: Text('Error opening file: ${e.toString()}'),
             actions: [
-              TextButton(
+              HoverableTextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),
@@ -746,7 +817,7 @@ Map the existing columns to these requested fields.
                 title: const Text('Success!'),
                 content: Text('File saved successfully to:\n$result'),
                 actions: [
-                  TextButton(
+                  HoverableTextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('OK'),
                   ),
@@ -762,7 +833,7 @@ Map the existing columns to these requested fields.
                 title: const Text('Error'),
                 content: const Text('Source file not found.'),
                 actions: [
-                  TextButton(
+                  HoverableTextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('OK'),
                   ),
@@ -780,7 +851,7 @@ Map the existing columns to these requested fields.
             title: const Text('Error'),
             content: Text('Error saving file: ${e.toString()}'),
             actions: [
-              TextButton(
+              HoverableTextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),

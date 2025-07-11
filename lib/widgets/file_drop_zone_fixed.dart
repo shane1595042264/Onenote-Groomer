@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
-import 'hoverable_button.dart';
 
 class FileDropZone extends StatefulWidget {
   final String title;
@@ -206,7 +205,7 @@ class _FileDropZoneState extends State<FileDropZone> {
         title: const Text('Unsupported File Format'),
         content: Text(message),
         actions: [
-          HoverableTextButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('OK'),
           ),
