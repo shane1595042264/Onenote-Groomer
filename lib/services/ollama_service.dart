@@ -517,4 +517,181 @@ class OllamaService {
     
     return fields;
   }
+
+  /// Process Excel data using AI to map and restructure columns
+  Future<List<Map<String, dynamic>>> processExcelData(
+    Map<String, dynamic> excelData,
+    String customPrompt, {
+    int? maxRows,
+  }) async {
+    final results = <Map<String, dynamic>>[];
+    const model = 'llama2:latest';
+
+    try {
+      final allData = excelData['allData'] as List<Map<String, dynamic>>;
+      final headers = excelData['headers'] as List<String>;
+      final totalRows = allData.length;
+      
+      // Process in batches for large datasets
+      final batchSize = maxRows ?? (totalRows > 100 ? 50 : totalRows);
+      final batches = <List<Map<String, dynamic>>>[];
+      
+      for (int i = 0; i < totalRows; i += batchSize) {
+        final end = (i + batchSize < totalRows) ? i + batchSize : totalRows;
+        batches.add(allData.sublist(i, end));
+      }
+
+      print('Processing ${batches.length} batches of Excel data...');
+
+      for (int batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        final batch = batches[batchIndex];
+        print('Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} rows)');
+
+        try {
+          final prompt = _buildExcelPrompt(batch, headers, customPrompt, batchIndex + 1);
+          final response = await _makeRequest(prompt, model);
+
+          if (response.statusCode == 200) {
+            final batchResults = _processExcelResponse(response, batch, customPrompt);
+            results.addAll(batchResults);
+          } else {
+            print('Error processing batch ${batchIndex + 1}: ${response.statusCode}');
+            // Add error entries for this batch
+            for (int i = 0; i < batch.length; i++) {
+              results.add({
+                'error': 'HTTP ${response.statusCode}',
+                'batch_number': batchIndex + 1,
+                'row_index': i,
+                ...batch[i], // Include original data
+              });
+            }
+          }
+        } catch (e) {
+          print('Exception processing batch ${batchIndex + 1}: $e');
+          // Add error entries for this batch
+          for (int i = 0; i < batch.length; i++) {
+            results.add({
+              'error': 'Exception: $e',
+              'batch_number': batchIndex + 1,
+              'row_index': i,
+              ...batch[i], // Include original data
+            });
+          }
+        }
+      }
+
+      print('Excel processing complete. Processed ${results.length} total rows.');
+      return results;
+
+    } catch (e) {
+      print('Critical error in Excel processing: $e');
+      throw Exception('Failed to process Excel data: $e');
+    }
+  }
+
+  /// Build AI prompt for Excel data processing
+  String _buildExcelPrompt(List<Map<String, dynamic>> batchData, List<String> headers, String customPrompt, int batchNumber) {
+    final promptBuffer = StringBuffer();
+    
+    promptBuffer.writeln('You are processing Excel data. Your task is to map and restructure the data according to the user\'s requirements.');
+    promptBuffer.writeln('');
+    promptBuffer.writeln('USER REQUIREMENTS:');
+    promptBuffer.writeln(customPrompt);
+    promptBuffer.writeln('');
+    promptBuffer.writeln('EXCEL DATA TO PROCESS (Batch $batchNumber):');
+    promptBuffer.writeln('Available columns: ${headers.join(', ')}');
+    promptBuffer.writeln('');
+    
+    // Include sample of the data
+    for (int i = 0; i < batchData.length && i < 10; i++) {
+      promptBuffer.writeln('Row ${i + 1}:');
+      for (final header in headers) {
+        final value = batchData[i][header] ?? '';
+        if (value.toString().isNotEmpty) {
+          promptBuffer.writeln('  $header: $value');
+        }
+      }
+      promptBuffer.writeln('');
+    }
+    
+    if (batchData.length > 10) {
+      promptBuffer.writeln('... and ${batchData.length - 10} more rows with similar structure.');
+      promptBuffer.writeln('');
+    }
+    
+    promptBuffer.writeln('INSTRUCTIONS:');
+    promptBuffer.writeln('1. Analyze the Excel data and map columns to the requested output fields');
+    promptBuffer.writeln('2. Extract and transform data according to the user requirements');
+    promptBuffer.writeln('3. Clean and standardize the data (remove extra spaces, normalize formats)');
+    promptBuffer.writeln('4. Only include fields that are specifically requested in the user requirements');
+    promptBuffer.writeln('5. If a requested field has no corresponding data, omit it or mark as empty');
+    promptBuffer.writeln('6. Maintain data relationships and context from the original Excel structure');
+    promptBuffer.writeln('');
+    promptBuffer.writeln('OUTPUT FORMAT: Return ONLY a JSON array with the processed data. Each object should contain only the fields requested in the user requirements.');
+    promptBuffer.writeln('Example: [{"field1": "value1", "field2": "value2"}, {"field1": "value3", "field2": "value4"}]');
+    
+    return promptBuffer.toString();
+  }
+
+  /// Process AI response for Excel data
+  List<Map<String, dynamic>> _processExcelResponse(http.Response response, List<Map<String, dynamic>> originalBatch, String customPrompt) {
+    try {
+      final responseData = json.decode(response.body);
+      final content = responseData['response'] as String? ?? '';
+
+      if (content.isEmpty) {
+        print('Empty response from AI');
+        return _createFallbackExcelResults(originalBatch);
+      }
+
+      // Extract JSON from the response
+      final jsonMatch = RegExp(r'\[.*\]', dotAll: true).firstMatch(content);
+      if (jsonMatch == null) {
+        print('No JSON array found in response');
+        return _createFallbackExcelResults(originalBatch);
+      }
+
+      final jsonString = jsonMatch.group(0)!;
+      final parsedData = json.decode(jsonString) as List<dynamic>;
+
+      final results = <Map<String, dynamic>>[];
+      for (int i = 0; i < parsedData.length && i < originalBatch.length; i++) {
+        final item = parsedData[i] as Map<String, dynamic>;
+        final cleanedItem = <String, dynamic>{};
+
+        // Clean all values and filter based on prompt requirements
+        for (final entry in item.entries) {
+          final cleanValue = _cleanValue(entry.value.toString());
+          if (cleanValue.isNotEmpty) {
+            cleanedItem[entry.key] = cleanValue;
+          }
+        }
+
+        if (cleanedItem.isNotEmpty) {
+          results.add(cleanedItem);
+        }
+      }
+
+      return results.isNotEmpty ? results : _createFallbackExcelResults(originalBatch);
+
+    } catch (e) {
+      print('Error parsing Excel AI response: $e');
+      return _createFallbackExcelResults(originalBatch);
+    }
+  }
+
+  /// Create fallback results when AI processing fails
+  List<Map<String, dynamic>> _createFallbackExcelResults(List<Map<String, dynamic>> originalBatch) {
+    print('Creating fallback results for Excel batch');
+    return originalBatch.map((row) {
+      final cleaned = <String, dynamic>{};
+      for (final entry in row.entries) {
+        final cleanValue = _cleanValue(entry.value.toString());
+        if (cleanValue.isNotEmpty) {
+          cleaned[entry.key] = cleanValue;
+        }
+      }
+      return cleaned;
+    }).toList();
+  }
 }

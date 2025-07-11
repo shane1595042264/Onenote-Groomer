@@ -27,12 +27,23 @@ class _FileDropZoneState extends State<FileDropZone> {
   Widget build(BuildContext context) {
     return DropTarget(
       onDragDone: (detail) {
+        print('File dropped: ${detail.files.length} files'); // Debug log
         if (detail.files.isNotEmpty) {
           final file = detail.files.first;
           final extension = file.path.substring(file.path.lastIndexOf('.'));
+          print('File extension: $extension, Accepted: ${widget.acceptedExtensions}'); // Debug log
 
           if (widget.acceptedExtensions.contains(extension.toLowerCase())) {
+            print('File accepted, calling onFileDropped'); // Debug log
             widget.onFileDropped(file.path);
+          } else {
+            print('File rejected - wrong extension'); // Debug log
+            // Show helpful error message for specific unsupported formats
+            if (extension.toLowerCase() == '.xlsb') {
+              _showUnsupportedFormatDialog('Excel Binary (.xlsb) files are not supported. Please convert your file to .xlsx format and try again.');
+            } else {
+              _showUnsupportedFormatDialog('File format $extension is not supported. Accepted formats: ${widget.acceptedExtensions.join(', ')}');
+            }
           }
         }
       },
@@ -43,10 +54,18 @@ class _FileDropZoneState extends State<FileDropZone> {
         child: Container(
           height: 150,
           decoration: BoxDecoration(
-            color: _isDragging ? const Color(0xFF3E3E42) : const Color(0xFF2D2D30),
+            color: widget.filePath != null 
+                ? Colors.green.withOpacity(0.1) 
+                : _isDragging 
+                  ? const Color(0xFF3E3E42) 
+                  : const Color(0xFF2D2D30),
             border: Border.all(
-              color: _isDragging ? const Color(0xFF9B59B6) : const Color(0xFF3E3E42),
-              width: 2,
+              color: widget.filePath != null
+                  ? Colors.green
+                  : _isDragging 
+                    ? const Color(0xFF9B59B6) 
+                    : const Color(0xFF3E3E42),
+              width: widget.filePath != null ? 3 : 2,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -64,12 +83,18 @@ class _FileDropZoneState extends State<FileDropZone> {
                       : const Color(0xFF9B59B6),
                 ),
                 const SizedBox(height: 8),
-                Text(widget.title, style: const TextStyle(color: Colors.white)),
+                Text(widget.title, style: TextStyle(
+                  color: widget.filePath != null ? Colors.green[300] : Colors.white,
+                  fontWeight: widget.filePath != null ? FontWeight.bold : FontWeight.normal,
+                )),
                 Text(
                   widget.filePath != null
-                      ? 'File loaded'
+                      ? '✓ File loaded successfully'
                       : 'Drag & drop or click',
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                    color: widget.filePath != null ? Colors.green[400] : Colors.grey,
+                    fontWeight: widget.filePath != null ? FontWeight.w500 : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -89,5 +114,21 @@ class _FileDropZoneState extends State<FileDropZone> {
     if (result != null && result.files.single.path != null) {
       widget.onFileDropped(result.files.single.path!);
     }
+  }
+
+  void _showUnsupportedFormatDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unsupported File Format'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }

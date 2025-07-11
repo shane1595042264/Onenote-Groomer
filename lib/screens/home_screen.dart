@@ -20,11 +20,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _oneNoteFilePath;
+  String? _excelInputFilePath;  // New: Excel file to process
   String? _excelTemplatePath;
   String? _outputFilePath;
   ExcelTemplate? _excelTemplate;
+  Map<String, dynamic>? _excelInputData;  // New: Analyzed Excel data
+  bool _isLoadingExcelInput = false;  // New: Loading state for Excel file
+  
   String _customPrompt = '''
-Extract business data from OneNote pages. Focus on:
+Extract and restructure data focusing on:
 - Company/Client name
 - Date and time information
 - Key decisions or actions
@@ -33,7 +37,7 @@ Extract business data from OneNote pages. Focus on:
 - Status or outcomes
 - Any follow-up items
 
-Structure the data appropriately for Excel export.
+Map the existing columns to these requested fields.
 ''';
 
   bool _isProcessing = false;
@@ -57,11 +61,44 @@ Structure the data appropriately for Excel export.
             colors: [Color(0xFF1E1E1E), Color(0xFF2D2D30)],
           ),
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Input Files Section
+              Text(
+                'Input Files',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Mode Indicator
+              if (_oneNoteFilePath != null || _excelInputFilePath != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _oneNoteFilePath != null ? Colors.blue.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _oneNoteFilePath != null ? Colors.blue.withOpacity(0.5) : Colors.green.withOpacity(0.5),
+                    ),
+                  ),
+                  child: Text(
+                    _oneNoteFilePath != null ? '📄 OneNote Processing Mode' : '📊 Excel Processing Mode',
+                    style: TextStyle(
+                      color: _oneNoteFilePath != null ? Colors.blue[300] : Colors.green[300],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -71,29 +108,264 @@ Structure the data appropriately for Excel export.
                       onFileDropped: (path) {
                         setState(() {
                           _oneNoteFilePath = path;
+                          _excelInputFilePath = null; // Clear Excel input when OneNote is selected
+                          _excelInputData = null;
                         });
                       },
                       filePath: _oneNoteFilePath,
                     ),
                   ),
                   const SizedBox(width: 16),
+                  Text(
+                    'OR',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white54,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: FileDropZone(
-                      title: 'Excel Template (Optional)',
+                      title: 'Excel File to Process',
                       acceptedExtensions: const ['.xlsx', '.xls'],
                       onFileDropped: (path) async {
+                        print('Excel file dropped: $path'); // Debug log
+                        
+                        // First, immediately update the UI to show the file is selected
                         setState(() {
-                          _excelTemplatePath = path;
+                          _excelInputFilePath = path;
+                          _oneNoteFilePath = null; // Clear OneNote when Excel is selected
+                          _isLoadingExcelInput = true; // Show loading state
                         });
-                        await _loadExcelTemplate(path);
+                        
+                        // Force a brief UI update to show visual feedback
+                        await Future.delayed(Duration(milliseconds: 100));
+                        
+                        // Then load the Excel data
+                        await _loadExcelInput(path);
                       },
-                      filePath: _excelTemplatePath,
+                      filePath: _excelInputFilePath,
                     ),
                   ),
                 ],
               ),
+              
+              // File Selection Feedback
+              if (_oneNoteFilePath != null || _excelInputFilePath != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (_oneNoteFilePath != null) 
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '📄 OneNote File Selected:',
+                                style: TextStyle(
+                                  color: Colors.blue[300],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _oneNoteFilePath!.split('\\').last,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else 
+                      const Expanded(child: SizedBox()),
+                    
+                    if (_oneNoteFilePath != null && _excelInputFilePath != null)
+                      const SizedBox(width: 16),
+                    
+                    if (_excelInputFilePath != null)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '📊 Excel File Selected:',
+                                style: TextStyle(
+                                  color: Colors.green[300],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _excelInputFilePath!.split('\\').last,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (_isLoadingExcelInput) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green[400]!),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Loading...',
+                                      style: TextStyle(
+                                        color: Colors.green[400],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else if (_excelInputData != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      size: 12,
+                                      color: Colors.green[400],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Ready to process!',
+                                      style: TextStyle(
+                                        color: Colors.green[400],
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      )
+                    else 
+                      const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ],
+              
               const SizedBox(height: 24),
-              Expanded(
+              
+              // Template Section (available for both modes)
+              Text(
+                _oneNoteFilePath != null 
+                  ? 'Excel Template (Optional)' 
+                  : _excelInputFilePath != null 
+                    ? 'Excel Template (Optional) - Use for output structure'
+                    : 'Excel Template (Optional)',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 12),
+              FileDropZone(
+                title: _oneNoteFilePath != null 
+                  ? 'Excel Template - Structure for OneNote output'
+                  : _excelInputFilePath != null 
+                    ? 'Excel Template - Target structure for processed data'
+                    : 'Excel Template',
+                acceptedExtensions: const ['.xlsx', '.xls'],
+                onFileDropped: (path) async {
+                  setState(() {
+                    _excelTemplatePath = path;
+                  });
+                  await _loadExcelTemplate(path);
+                },
+                filePath: _excelTemplatePath,
+              ),
+              const SizedBox(height: 24),
+              
+              // Excel Data Preview (only show if Excel input is loaded)
+              if (_excelInputData != null) ...[
+                Text(
+                  'Excel Data Preview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3C3C3C),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'File: ${_excelInputData!['sheetName']}',
+                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Rows: ${_excelInputData!['totalRows']}, Columns: ${_excelInputData!['columns']}',
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Columns: ${(_excelInputData!['headers'] as List<String>).join(', ')}',
+                        style: const TextStyle(color: Colors.white54),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+              
+              // Prompt Editor Section
+              Text(
+                'AI Processing Prompt',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 300,
                 child: PromptEditor(
                   initialPrompt: _customPrompt,
                   onPromptChanged: (prompt) {
@@ -108,8 +380,9 @@ Structure the data appropriately for Excel export.
                   progress: _progress,
                 ),
               const SizedBox(height: 24),
+              // Process Button
               ElevatedButton(
-                onPressed: _oneNoteFilePath != null && !_isProcessing
+                onPressed: (_oneNoteFilePath != null || _excelInputFilePath != null) && !_isProcessing
                     ? _processFile
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -120,9 +393,15 @@ Structure the data appropriately for Excel export.
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Process OneNote File',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Text(
+                  _isProcessing 
+                    ? 'Processing...' 
+                    : _excelInputFilePath != null 
+                      ? 'Process Excel File' 
+                      : _oneNoteFilePath != null
+                        ? 'Process OneNote File'
+                        : 'Select a file to process',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 16),
@@ -179,6 +458,52 @@ Structure the data appropriately for Excel export.
     });
   }
 
+  Future<void> _loadExcelInput(String path) async {
+    print('_loadExcelInput called with: $path'); // Debug log
+    
+    // Get the service reference before any async operations
+    final excelService = context.read<excel.ExcelService>();
+    
+    try {
+      print('ExcelService obtained, reading file...'); // Debug log
+      final inputData = await excelService.readExcelFile(path);
+      print('Excel file read successfully: $inputData'); // Debug log
+      
+      if (mounted) {
+        setState(() {
+          _excelInputData = inputData;
+          _isLoadingExcelInput = false; // Clear loading state
+        });
+        print('State updated with Excel data'); // Debug log
+      }
+    } catch (e) {
+      print('Error loading Excel file: $e'); // Debug log
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to read Excel file: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        
+        // Clear the file path if there was an error
+        setState(() {
+          _excelInputFilePath = null;
+          _excelInputData = null;
+          _isLoadingExcelInput = false; // Clear loading state
+        });
+      }
+    }
+  }
+
   Future<void> _processFile() async {
     setState(() {
       _isProcessing = true;
@@ -187,68 +512,91 @@ Structure the data appropriately for Excel export.
     });
 
     try {
-      final oneNoteService = context.read<onenote.OneNoteService>();
       final ollamaService = context.read<ollama.OllamaService>();
       final excelService = context.read<excel.ExcelService>();
 
-      setState(() {
-        _statusMessage = 'Reading OneNote file...';
-        _progress = 0.2;
-      });
+      List<Map<String, dynamic>> extractedData;
+      String outputPath;
 
-      final pages = await oneNoteService.readOneNoteFile(_oneNoteFilePath!);
-
-      setState(() {
-        _statusMessage = 'Processing ${pages.length} pages...';
-        _progress = 0.3;
-      });
-
-      final extractedData = <Map<String, dynamic>>[];
-      for (int i = 0; i < pages.length; i++) {
+      if (_excelInputFilePath != null) {
+        // Process Excel file
         setState(() {
-          _statusMessage = 'Processing page ${i + 1} of ${pages.length}...';
-          _progress = 0.3 + (0.5 * (i / pages.length));
+          _statusMessage = 'Processing Excel data...';
+          _progress = 0.3;
         });
 
-        final processedData = await ollamaService.processPages(
-          [pages[i]],
-          _excelTemplate,
+        extractedData = await ollamaService.processExcelData(
+          _excelInputData!,
           _customPrompt,
+          maxRows: 1000, // Limit for large files
         );
 
-        final data = <String, dynamic>{};
-        if (processedData.isNotEmpty) {
-          data.addAll(Map<String, dynamic>.from(processedData.first));
-        }
+        outputPath = _excelInputFilePath!
+            .replaceAll(RegExp(r'\.(xlsx|xls)$'), '_processed.xlsx');
+
+      } else {
+        // Process OneNote file (existing logic)
+        final oneNoteService = context.read<onenote.OneNoteService>();
         
-        // Only add technical columns if explicitly requested in the prompt
-        if (_customPrompt.toLowerCase().contains('page title') || 
-            _customPrompt.toLowerCase().contains('pagetitle') ||
-            _customPrompt.toLowerCase().contains('_pagetitle')) {
-          data['_pageTitle'] = pages[i].title;
-        }
-        
-        if (_customPrompt.toLowerCase().contains('section') || 
-            _customPrompt.toLowerCase().contains('_section')) {
-          data['_section'] = pages[i].parentSection;
-        }
-        
-        if (_customPrompt.toLowerCase().contains('created date') || 
-            _customPrompt.toLowerCase().contains('createddate') ||
-            _customPrompt.toLowerCase().contains('_createddate')) {
-          data['_createdDate'] = pages[i].createdTime.toIso8601String();
+        setState(() {
+          _statusMessage = 'Reading OneNote file...';
+          _progress = 0.2;
+        });
+
+        final pages = await oneNoteService.readOneNoteFile(_oneNoteFilePath!);
+
+        setState(() {
+          _statusMessage = 'Processing ${pages.length} pages...';
+          _progress = 0.3;
+        });
+
+        extractedData = <Map<String, dynamic>>[];
+        for (int i = 0; i < pages.length; i++) {
+          setState(() {
+            _statusMessage = 'Processing page ${i + 1} of ${pages.length}...';
+            _progress = 0.3 + (0.5 * (i / pages.length));
+          });
+
+          final processedData = await ollamaService.processPages(
+            [pages[i]],
+            _excelTemplate,
+            _customPrompt,
+          );
+
+          final data = <String, dynamic>{};
+          if (processedData.isNotEmpty) {
+            data.addAll(Map<String, dynamic>.from(processedData.first));
+          }
+          
+          // Only add technical columns if explicitly requested in the prompt
+          if (_customPrompt.toLowerCase().contains('page title') || 
+              _customPrompt.toLowerCase().contains('pagetitle') ||
+              _customPrompt.toLowerCase().contains('_pagetitle')) {
+            data['_pageTitle'] = pages[i].title;
+          }
+          
+          if (_customPrompt.toLowerCase().contains('section') || 
+              _customPrompt.toLowerCase().contains('_section')) {
+            data['_section'] = pages[i].parentSection;
+          }
+          
+          if (_customPrompt.toLowerCase().contains('created date') || 
+              _customPrompt.toLowerCase().contains('createddate') ||
+              _customPrompt.toLowerCase().contains('_createddate')) {
+            data['_createdDate'] = pages[i].createdTime.toIso8601String();
+          }
+
+          extractedData.add(data);
         }
 
-        extractedData.add(data);
+        outputPath = _oneNoteFilePath!
+            .replaceAll(RegExp(r'\.(one|onepkg)$'), '_extracted.xlsx');
       }
 
       setState(() {
         _statusMessage = 'Writing Excel file...';
         _progress = 0.9;
       });
-
-      final outputPath = _oneNoteFilePath!
-          .replaceAll(RegExp(r'\.(one|onepkg)$'), '_extracted.xlsx');
 
       await excelService.writeExcelFile(
         outputPath,
@@ -266,8 +614,7 @@ Structure the data appropriately for Excel export.
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Success!'),
-          content:
-              Text('Data extracted successfully!\n\nOutput file: $outputPath'),
+          content: Text('Data ${_excelInputFilePath != null ? "restructured" : "extracted"} successfully!\n\nOutput file: $outputPath'),
           actions: [
             TextButton.icon(
               onPressed: () {
