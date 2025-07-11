@@ -16,6 +16,7 @@ class PromptEditor extends StatefulWidget {
 
 class _PromptEditorState extends State<PromptEditor> {
   late TextEditingController _controller;
+  bool _isHovering = false;
 
   @override
   void initState() {
@@ -25,11 +26,23 @@ class _PromptEditorState extends State<PromptEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D2D30),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2D2D30),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: _isHovering ? [
+            BoxShadow(
+              color: const Color(0xFF9B59B6).withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
+        ),
       child: Column(
         children: [
           Container(
@@ -69,6 +82,7 @@ class _PromptEditorState extends State<PromptEditor> {
           ),
         ],
       ),
+    ),
     );
   }
 }
