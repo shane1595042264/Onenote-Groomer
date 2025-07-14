@@ -541,7 +541,7 @@ File path: $filePath''',
     }
     
     // Add the last page
-    if (currentPage.trim Function() .isNotEmpty) {
+    if (currentPage.trim Function() Function .isNotEmpty) {
       potentialPages.add('$currentTitle\n$currentPage'.trim());
     }
     

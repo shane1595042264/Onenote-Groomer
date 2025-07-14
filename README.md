@@ -108,6 +108,22 @@ Restructure this messy Excel data by mapping columns to:
 - Clean and standardize the format
 ```
 
+## Project Structure
+
+The project is organized into the following directories:
+
+- **`lib/`** - Main application source code
+- **`windows/`** - Windows-specific build configuration
+- **`test/`** - Unit tests for the application
+- **`documentation/`** - All project documentation and guides
+- **`testing/`** - Test scripts and testing utilities
+- **`output_samples/`** - Sample input/output files and examples
+- **`scripts/`** - Build, package, and automation scripts
+- **`packages/`** - Compiled releases and distribution packages
+- **`legacy/`** - Legacy code and deprecated files
+
+Each folder contains a README.md with specific details about its contents.
+
 ## Technical Details
 
 - **Architecture**: Clean separation of concerns with services for OneNote, AI processing, and Excel export
