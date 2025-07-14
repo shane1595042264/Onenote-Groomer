@@ -187,7 +187,7 @@ class OllamaService {
   }
 
   String _cleanText(String text) {
-    return text.length > 200 ? text.substring(0, 200) + '...' : text;
+    return text.length > 200 ? '${text.substring(0, 200)}...' : text;
   }
 
   String _buildPrompt(OneNotePage page, ExcelTemplate? template, String customPrompt) {

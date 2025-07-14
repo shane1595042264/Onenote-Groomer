@@ -525,10 +525,23 @@ File: $filePath''',
     final pages = <OneNotePage>[];
     
     try {
-      // Check for the extracted business data JSON file
-      final jsonFile = File('extracted_business_data.json');
-      if (!await jsonFile.exists()) {
-        print('No extracted JSON data found');
+      // Check for the extracted business data JSON file in multiple locations
+      final possiblePaths = [
+        'extracted_business_data.json',
+        'legacy/extracted_business_data.json',
+      ];
+      
+      File? jsonFile;
+      for (final path in possiblePaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          jsonFile = file;
+          break;
+        }
+      }
+      
+      if (jsonFile == null) {
+        print('No extracted JSON data found in any location');
         return pages;
       }
       

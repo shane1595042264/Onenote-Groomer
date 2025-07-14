@@ -73,7 +73,7 @@ Map the existing columns to these requested fields.
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Input Files Section
-              Text(
+              const Text(
                 'Input Files',
                 style: TextStyle(
                   fontSize: 18,
@@ -127,7 +127,7 @@ Map the existing columns to these requested fields.
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Text(
+                  const Text(
                     'OR',
                     style: TextStyle(
                       fontSize: 16,
@@ -151,7 +151,7 @@ Map the existing columns to these requested fields.
                         });
                         
                         // Force a brief UI update to show visual feedback
-                        await Future.delayed(Duration(milliseconds: 100));
+                        await Future.delayed(const Duration(milliseconds: 100));
                         
                         // Then load the Excel data
                         await _loadExcelInput(path);
@@ -332,7 +332,7 @@ Map the existing columns to these requested fields.
                   : _excelInputFilePath != null 
                     ? 'Excel Template (Optional) - Use for output structure'
                     : 'Excel Template (Optional)',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white70,
@@ -364,7 +364,7 @@ Map the existing columns to these requested fields.
               
               // Excel Data Preview (only show if Excel input is loaded)
               if (_excelInputData != null) ...[
-                Text(
+                const Text(
                   'Excel Data Preview',
                   style: TextStyle(
                     fontSize: 18,
@@ -418,7 +418,7 @@ Map the existing columns to these requested fields.
               ],
               
               // Prompt Editor Section
-              Text(
+              const Text(
                 'AI Processing Prompt',
                 style: TextStyle(
                   fontSize: 18,
@@ -427,7 +427,7 @@ Map the existing columns to these requested fields.
                 ),
               ),
               const SizedBox(height: 12),
-              Container(
+              SizedBox(
                 height: 300,
                 child: PromptEditor(
                   initialPrompt: _customPrompt,

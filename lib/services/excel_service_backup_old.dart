@@ -183,7 +183,7 @@ class ExcelService {
       }
       
       // Small delay to ensure file system releases the handle
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 100));
     } catch (e) {
       print('Error ensuring file is closed: $e');
     }
@@ -198,7 +198,7 @@ class ExcelService {
         // Delete existing file if it exists
         if (await outputFile.exists()) {
           await outputFile.delete();
-          await Future.delayed(Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 100));
         }
         
         // Write the file
