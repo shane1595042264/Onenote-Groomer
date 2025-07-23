@@ -528,6 +528,7 @@ File: $filePath''',
       // Check for the extracted business data JSON file in multiple locations
       final possiblePaths = [
         'extracted_business_data.json',
+        'output_samples/extracted_business_data.json',
         'legacy/extracted_business_data.json',
       ];
       

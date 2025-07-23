@@ -148,8 +148,28 @@ class OllamaService {
             value.toLowerCase() == 'value' ||  // Skip generic "value" responses
             value.toLowerCase().contains('[actual') ||  // Skip example placeholders
             value.toLowerCase().contains('if found') ||
+            value.toLowerCase().contains('specific value only') ||  // Skip our own prompt text
+            value.toLowerCase().contains('field name') ||
+            value.toLowerCase().contains('template') ||
+            value.toLowerCase().contains('boilerplate') ||
+            value.length > 300 ||  // Reject overly long responses (likely template dumps)
             fieldName.toLowerCase().contains('note') && value.length > 100) {
           continue;
+        }
+        
+        // AGGRESSIVE TEMPLATE DETECTION: Skip if contains too many field-like terms
+        final templateTerms = ['pricing', 'position', 'technical', 'sic code', 'naics', 'description', 
+                              'mfl fire', 'hazard grade', 'paydex', 'financial stress', 'appetite',
+                              'domiciled state', 'ancillary states', 'opportunity', 'submissions',
+                              'quoted date', 'subjectivities', 'operations', 'broker', 'industry group',
+                              'action items', 'competing', 'deviate', 'justification', 'commission',
+                              'payment plan', 'exposures', 'controls', 'terrorism', 'locations'];
+        
+        final templateTermCount = templateTerms.where((term) => 
+            value.toLowerCase().contains(term)).length;
+        
+        if (templateTermCount > 2) {
+          continue;  // Skip responses with too many template terms
         }
         
         // STRICT FILTERING: Only allow fields that match the prompt
@@ -199,8 +219,28 @@ class OllamaService {
             value.toLowerCase() == 'value' ||  // Skip generic "value" responses
             value.toLowerCase().contains('[actual') ||  // Skip example placeholders
             value.toLowerCase().contains('if found') ||
+            value.toLowerCase().contains('specific value only') ||  // Skip our own prompt text
+            value.toLowerCase().contains('field name') ||
+            value.toLowerCase().contains('template') ||
+            value.toLowerCase().contains('boilerplate') ||
+            value.length > 300 ||  // Reject overly long responses (likely template dumps)
             fieldName.toLowerCase().contains('note') && value.length > 100) {
           continue;
+        }
+        
+        // AGGRESSIVE TEMPLATE DETECTION: Skip if contains too many field-like terms
+        final templateTerms = ['pricing', 'position', 'technical', 'sic code', 'naics', 'description', 
+                              'mfl fire', 'hazard grade', 'paydex', 'financial stress', 'appetite',
+                              'domiciled state', 'ancillary states', 'opportunity', 'submissions',
+                              'quoted date', 'subjectivities', 'operations', 'broker', 'industry group',
+                              'action items', 'competing', 'deviate', 'justification', 'commission',
+                              'payment plan', 'exposures', 'controls', 'terrorism', 'locations'];
+        
+        final templateTermCount = templateTerms.where((term) => 
+            value.toLowerCase().contains(term)).length;
+        
+        if (templateTermCount > 2) {
+          continue;  // Skip responses with too many template terms
         }
         
         // Clean the field name but keep it close to what AI provided
@@ -272,6 +312,44 @@ class OllamaService {
         .replaceAll(RegExp(r'\s+'), ' ')  // Replace multiple spaces with single space
         .trim();
     
+    // AGGRESSIVE FILTERING: Remove template/boilerplate content
+    final boilerplatePatterns = [
+      // Common template field patterns that should be removed
+      RegExp(r'estimated pricing position.*?pricing justification', caseSensitive: false),
+      RegExp(r'sic code.*?naics code.*?description', caseSensitive: false),
+      RegExp(r'mfl fire line.*?hazard grade.*?paydex score', caseSensitive: false),
+      RegExp(r'financial stress score.*?appetite.*?domiciled state', caseSensitive: false),
+      RegExp(r'ancillary states.*?opportunity.*?prior submissions', caseSensitive: false),
+      RegExp(r'need by date.*?quoted date.*?subjectivities', caseSensitive: false),
+      RegExp(r'description of operations.*?what they do.*?what they do not do', caseSensitive: false),
+      RegExp(r'broker.*?industry group.*?named insured schedule', caseSensitive: false),
+      RegExp(r'action items.*?why are you marketing the account', caseSensitive: false),
+      RegExp(r'expiring carrier.*?who am i competing against', caseSensitive: false),
+      RegExp(r'target price.*?pricing justification.*?class fit', caseSensitive: false),
+      RegExp(r'does it make since at that price.*?if not.*?why should we deviate', caseSensitive: false),
+      RegExp(r'technical price.*?property.*?gl.*?auto.*?wc.*?umbrella', caseSensitive: false),
+      RegExp(r'requested commission.*?requested payment plan', caseSensitive: false),
+      RegExp(r'exposures.*?controls.*?other', caseSensitive: false),
+      RegExp(r'terrorism coverage.*?tier 1 or tier 2 locations', caseSensitive: false),
+      RegExp(r'severe or high risk hail.*?quake.*?flood.*?wildfire', caseSensitive: false),
+      
+      // Email signatures and contact info bloat
+      RegExp(r'follow us on.*?(linkedin|facebook|instagram|twitter)', caseSensitive: false),
+      RegExp(r'\+1\s*\d{3}[\s\-]\d{3}[\s\-]\d{4}.*?\.com', caseSensitive: false),
+      RegExp(r'senior account manager.*?construction and real estate', caseSensitive: false),
+      RegExp(r'\d+\s+[ns]\.?\s+\w+\s+road.*?suite.*?\d+.*?\|\s*\w+\s*,\s*[a-z]{2}', caseSensitive: false),
+      
+      // Common insurance jargon that doesn't belong in specific fields
+      RegExp(r'pricing by line.*?property.*?gl.*?auto.*?wc', caseSensitive: false),
+      RegExp(r'dividend plan.*?estimated pricing position', caseSensitive: false),
+      RegExp(r'rate but being non-renewed', caseSensitive: false),
+    ];
+    
+    // Remove boilerplate patterns
+    for (final pattern in boilerplatePatterns) {
+      cleaned = cleaned.replaceAll(pattern, '');
+    }
+    
     // SUPER AGGRESSIVE cleanup - remove ALL formatting artifacts
     cleaned = cleaned
         .replaceAll(RegExp(r'^[\s\-\*\•\>\<\|\[\]\{\}]+'), '')  // Remove leading symbols/whitespace
@@ -282,6 +360,32 @@ class OllamaService {
         .replaceAll(RegExp(r'\s+$'), '')  // Remove any trailing whitespace
         .trim();
     
+    // LENGTH CHECK: If the content is too long (likely boilerplate), truncate or reject
+    if (cleaned.length > 200) {
+      // Check if it contains multiple concepts (likely template dump)
+      final conceptCount = cleaned.toLowerCase().split(RegExp(r'[;:|]')).length;
+      if (conceptCount > 3) {
+        // This is likely template dumping, try to extract just the first meaningful part
+        final firstConcept = cleaned.split(RegExp(r'[;:|]')).first.trim();
+        if (firstConcept.length > 10 && firstConcept.length < 100) {
+          cleaned = firstConcept;
+        } else {
+          return 'N/A';  // Reject obviously bad content
+        }
+      } else {
+        // Truncate but keep it readable
+        cleaned = '${cleaned.substring(0, 150)}...';
+      }
+    }
+    
+    // RELEVANCE CHECK: If it contains too many field names, it's probably template dump
+    final fieldNameCount = RegExp(r'\b(pricing|position|technical|class|fit|code|description|grade|score|appetite|state|opportunity|submissions|date|operations|broker|industry|group|schedule|items|carrier|competing|deviate|justification|commission|payment|plan|exposures|controls|coverage|locations|hail|quake|flood|wildfire|terrorism)\b', caseSensitive: false)
+        .allMatches(cleaned).length;
+    
+    if (fieldNameCount > 5) {
+      return 'N/A';  // Too many field names = template dump
+    }
+    
     // Final paranoid cleanup - ensure absolutely no trailing/leading whitespace
     while (cleaned.startsWith(' ') || cleaned.startsWith('\t') || cleaned.startsWith('\n')) {
       cleaned = cleaned.substring(1);
@@ -290,7 +394,7 @@ class OllamaService {
       cleaned = cleaned.substring(0, cleaned.length - 1);
     }
     
-    return cleaned.isEmpty ? 'N/A' : cleaned;
+    return cleaned.isEmpty || cleaned.length < 3 ? 'N/A' : cleaned;
   }
 
   String _capitalizeFieldName(String fieldName) {
@@ -314,18 +418,32 @@ class OllamaService {
     
     if (template != null && template.columns.isNotEmpty) {
       // Template-based extraction
-      basePrompt.writeln('Extract data from the following text and provide ONLY the values for each field.');
+      basePrompt.writeln('Extract ONLY specific data values from the following text.');
+      basePrompt.writeln('CRITICAL RULES:');
+      basePrompt.writeln('1. Provide ONLY the actual values, not field descriptions or templates');
+      basePrompt.writeln('2. Do NOT include any field names, prompts, or boilerplate text');
+      basePrompt.writeln('3. If no specific value exists for a field, write "N/A"');
+      basePrompt.writeln('4. Keep responses short and specific (under 50 words per field)');
+      basePrompt.writeln('5. Do NOT copy template text or field lists');
+      basePrompt.writeln('');
       basePrompt.writeln('Format your response as field:value pairs, one per line.');
       basePrompt.writeln('Required fields:');
       for (final column in template.columns) {
-        basePrompt.writeln('$column: [value or N/A]');
+        basePrompt.writeln('$column: [specific value only]');
       }
       basePrompt.writeln('');
       basePrompt.writeln('Text to analyze:');
       basePrompt.writeln(page.content);
     } else {
       // Custom prompt-based extraction - derive fields from user's prompt
-      basePrompt.writeln('Extract ONLY the following information from the text below.');
+      basePrompt.writeln('Extract ONLY the following specific information from the text below.');
+      basePrompt.writeln('CRITICAL RULES:');
+      basePrompt.writeln('1. Provide ONLY actual values, not descriptions or templates');
+      basePrompt.writeln('2. Do NOT include field names, prompts, or boilerplate text');
+      basePrompt.writeln('3. Keep each response under 50 words');
+      basePrompt.writeln('4. If no specific value exists, write "N/A"');
+      basePrompt.writeln('5. Do NOT copy any template text or field lists');
+      basePrompt.writeln('');
       basePrompt.writeln('Requirements: ${customPrompt.isNotEmpty ? customPrompt : 'Extract key business information'}');
       basePrompt.writeln('');
       
@@ -334,16 +452,18 @@ class OllamaService {
       if (suggestedFields.isNotEmpty) {
         basePrompt.writeln('Provide EXACTLY these fields and NOTHING else:');
         for (final field in suggestedFields) {
-          basePrompt.writeln('$field: [value if found, or N/A]');
+          basePrompt.writeln('$field: [specific value only, or N/A]');
         }
         basePrompt.writeln('');
         basePrompt.writeln('IMPORTANT: Only provide the ${suggestedFields.length} fields listed above.');
         basePrompt.writeln('Do not add any additional fields or information.');
         basePrompt.writeln('Do not include explanatory text or comments.');
+        basePrompt.writeln('Do not copy any template text or field descriptions.');
       } else {
         // Fallback if we can't parse the prompt
         basePrompt.writeln('Provide information in field:value format.');
         basePrompt.writeln('Create appropriate field names based on the requirements above.');
+        basePrompt.writeln('Keep values specific and under 50 words each.');
       }
       
       basePrompt.writeln('');
