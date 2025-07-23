@@ -93,7 +93,7 @@ class ExcelService {
     }).toList();
   }
 
-  Future<void> writeExcelFile(
+  Future<String> writeExcelFile(
     String outputPath,
     List<Map<String, dynamic>> data,
     List<String>? templateColumns,
@@ -217,11 +217,12 @@ class ExcelService {
       await outputFile.parent.create(recursive: true);
 
       // Try to write file with retry logic
-      await _writeFileWithRetry(outputFile, fileBytes);
+      final actualOutputPath = await _writeFileWithRetry(outputFile, fileBytes);
 
-      print('Excel file written successfully: $outputPath');
+      print('Excel file written successfully: $actualOutputPath');
       print('Total rows: ${data.length}');
       print('Total columns: ${allColumns.length}');
+      return actualOutputPath;
     } catch (e) {
       print('Error writing Excel file: $e');
       throw Exception('Failed to write Excel file: $e');
@@ -247,38 +248,43 @@ class ExcelService {
     }
   }
 
-  Future<void> _writeFileWithRetry(File outputFile, List<int> fileBytes) async {
+  Future<String> _writeFileWithRetry(File outputFile, List<int> fileBytes) async {
     const maxRetries = 3;
     const retryDelay = Duration(seconds: 1);
 
+    // First, try to find an available filename if the original is locked
+    File finalOutputFile = outputFile;
+    if (await outputFile.exists()) {
+      final availableFile = await _findAvailableFilename(outputFile.path);
+      finalOutputFile = File(availableFile);
+      print('Original file exists/locked, using: ${availableFile}');
+    }
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // Delete existing file if it exists and wait a bit
-        if (await outputFile.exists()) {
-          await outputFile.delete();
-          await Future.delayed(const Duration(milliseconds: 200));
-        }
-
-        // Write the file
-        await outputFile.writeAsBytes(fileBytes, flush: true);
-        return; // Success!
+        // Try to write directly to the available file
+        await finalOutputFile.writeAsBytes(fileBytes, flush: true);
+        print('Excel file written successfully: ${finalOutputFile.path}');
+        return finalOutputFile.path; // Success!
       } catch (e) {
         print('Write attempt $attempt failed: $e');
 
         if (attempt == maxRetries) {
-          // Last attempt failed, try alternative approach
+          // Last attempt failed, try temp file approach with unique name
           try {
-            final tempPath = '${outputFile.path}.tmp';
+            final uniquePath = await _findAvailableFilename(finalOutputFile.path);
+            final tempPath = '${uniquePath}.tmp';
             final tempFile = File(tempPath);
             await tempFile.writeAsBytes(fileBytes, flush: true);
 
-            // Try to rename temp file to final name
-            await tempFile.rename(outputFile.path);
-            return; // Success with temp file approach!
+            // Try to rename temp file to final unique name
+            await tempFile.rename(uniquePath);
+            print('Excel file written via temp file: $uniquePath');
+            return uniquePath; // Success with temp file approach!
           } catch (tempError) {
             throw Exception('Failed to write Excel file after $maxRetries attempts. '
                 'Error: $e. Temp file error: $tempError. '
-                'Please close the Excel file if it\'s open and ensure you have write permissions to the output directory.');
+                'Please ensure you have write permissions to the output directory.');
           }
         }
 
@@ -286,6 +292,58 @@ class ExcelService {
         await Future.delayed(retryDelay);
       }
     }
+    
+    // This should never be reached due to the exception in the last attempt
+    throw Exception('Failed to write Excel file: Unexpected error - no retry attempts succeeded');
+  }
+
+  /// Find an available filename by adding numbers if the file exists
+  Future<String> _findAvailableFilename(String originalPath) async {
+    final file = File(originalPath);
+    final directory = file.parent.path;
+    final filename = file.uri.pathSegments.last;
+    
+    // Split filename and extension
+    final lastDotIndex = filename.lastIndexOf('.');
+    final name = lastDotIndex != -1 ? filename.substring(0, lastDotIndex) : filename;
+    final extension = lastDotIndex != -1 ? filename.substring(lastDotIndex) : '';
+    
+    // Try the original name first
+    if (!await file.exists()) {
+      try {
+        // Test if we can write to this file (not locked)
+        final testFile = await file.open(mode: FileMode.writeOnly);
+        await testFile.close();
+        return originalPath; // File is available
+      } catch (e) {
+        // File exists or is locked, continue to find alternative
+      }
+    }
+    
+    // Generate alternative names with numbers
+    for (int i = 1; i <= 999; i++) {
+      final newFilename = '${name}_$i$extension';
+      final newPath = '$directory${Platform.pathSeparator}$newFilename';
+      final newFile = File(newPath);
+      
+      if (!await newFile.exists()) {
+        try {
+          // Test if we can write to this file
+          final testFile = await newFile.open(mode: FileMode.writeOnly);
+          await testFile.close();
+          await newFile.delete(); // Clean up test file
+          return newPath; // This filename is available
+        } catch (e) {
+          // This name is also problematic, try next number
+          continue;
+        }
+      }
+    }
+    
+    // If we get here, generate a unique name with timestamp
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final timestampFilename = '${name}_$timestamp$extension';
+    return '$directory${Platform.pathSeparator}$timestampFilename';
   }
 
   List<String> _extractAllColumns(List<Map<String, dynamic>> data) {

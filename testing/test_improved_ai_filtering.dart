@@ -53,12 +53,12 @@ void main() async {
       
       // Create test output file
       print('\nCreating test Excel file...');
-      await excelService.writeExcelFile(
+      final outputPath = await excelService.writeExcelFile(
         'testing/test_improved_filtering.xlsx',
         results, 
         null
       );
-      print('Test file created: testing/test_improved_filtering.xlsx');
+      print('Test file created: $outputPath');
     }
     
     oneNoteService.dispose();
