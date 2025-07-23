@@ -67,28 +67,28 @@ class _FileDropZoneState extends State<FileDropZone> {
                 height: 150,
                 decoration: BoxDecoration(
                   color: widget.filePath != null 
-                      ? Colors.green.withOpacity(_isHovering ? 0.15 : 0.1) 
+                      ? Theme.of(context).colorScheme.tertiary.withOpacity(_isHovering ? 0.15 : 0.1) 
                       : _isDragging 
-                        ? const Color(0xFF3E3E42) 
+                        ? Theme.of(context).colorScheme.surfaceContainer
                         : _isHovering
-                          ? const Color(0xFF363636)
-                          : const Color(0xFF2D2D30),
+                          ? Theme.of(context).colorScheme.surfaceContainerHighest
+                          : Theme.of(context).colorScheme.surface,
                   border: Border.all(
                     color: widget.filePath != null
-                        ? Colors.green
+                        ? Theme.of(context).colorScheme.tertiary
                         : _isDragging 
-                          ? const Color(0xFF9B59B6) 
+                          ? Theme.of(context).colorScheme.primary
                           : _isHovering
-                            ? const Color(0xFF555555)
-                            : const Color(0xFF3E3E42),
+                            ? Theme.of(context).colorScheme.outline
+                            : Theme.of(context).colorScheme.outlineVariant,
                     width: widget.filePath != null ? 3 : 2,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: _isHovering ? [
                     BoxShadow(
                       color: widget.filePath != null 
-                          ? Colors.green.withOpacity(0.3)
-                          : Colors.grey.withOpacity(0.2),
+                          ? Theme.of(context).colorScheme.tertiary.withOpacity(0.3)
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.2),
                       spreadRadius: 2,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -105,35 +105,51 @@ class _FileDropZoneState extends State<FileDropZone> {
                             : Icons.cloud_upload,
                         size: 48,
                         color: widget.filePath != null
-                            ? Colors.green
-                            : const Color(0xFF9B59B6),
+                            ? Theme.of(context).colorScheme.tertiary
+                            : Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(height: 8),
-                      Text(widget.title, style: TextStyle(
-                        color: widget.filePath != null ? Colors.green[300] : Colors.white,
-                        fontWeight: widget.filePath != null ? FontWeight.bold : FontWeight.normal,
-                      )),
+                      const SizedBox(height: 12),
+                      Text(
+                        widget.title, 
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: widget.filePath != null 
+                            ? Theme.of(context).colorScheme.tertiary
+                            : Theme.of(context).colorScheme.onSurface,
+                          fontWeight: widget.filePath != null ? FontWeight.bold : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         widget.filePath != null
                             ? '✓ File loaded successfully'
-                            : 'Drag & drop or click',
-                        style: TextStyle(
-                          color: widget.filePath != null ? Colors.green[400] : Colors.grey,
+                            : 'Drag & drop or click to browse',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: widget.filePath != null 
+                            ? Theme.of(context).colorScheme.tertiary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                           fontWeight: widget.filePath != null ? FontWeight.w500 : FontWeight.normal,
                         ),
                       ),
                       // Show file name if available
                       if (widget.filePath != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            widget.filePath!.split('\\').last,
-                            style: TextStyle(
-                              color: Colors.green[300],
-                              fontSize: 12,
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              widget.filePath!.split('\\').last,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.tertiary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                     ],
@@ -159,12 +175,12 @@ class _FileDropZoneState extends State<FileDropZone> {
                         height: _isCancelHovering ? 28 : 24,
                         decoration: BoxDecoration(
                           color: _isCancelHovering 
-                              ? Colors.red.withOpacity(1.0)
-                              : Colors.red.withOpacity(0.8),
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.error.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(_isCancelHovering ? 14 : 12),
                           boxShadow: _isCancelHovering ? [
                             BoxShadow(
-                              color: Colors.red.withOpacity(0.4),
+                              color: Theme.of(context).colorScheme.error.withOpacity(0.4),
                               spreadRadius: 2,
                               blurRadius: 6,
                               offset: const Offset(0, 2),
@@ -173,7 +189,7 @@ class _FileDropZoneState extends State<FileDropZone> {
                         ),
                         child: Icon(
                           Icons.close,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onError,
                           size: _isCancelHovering ? 18 : 16,
                         ),
                       ),

@@ -66,11 +66,12 @@ Notes: [any other relevant info]
     final excelService = ExcelService();
     final outputFile = File('test_output.xlsx');
     
-    await excelService.writeExcelFile(outputFile.path, results, template.columns);
+    final actualOutputPath = await excelService.writeExcelFile(outputFile.path, results, template.columns);
     
-    if (outputFile.existsSync()) {
-      print('Excel file created successfully: ${outputFile.path}');
-      print('File size: ${outputFile.lengthSync()} bytes');
+    final actualOutputFile = File(actualOutputPath);
+    if (actualOutputFile.existsSync()) {
+      print('Excel file created successfully: $actualOutputPath');
+      print('File size: ${actualOutputFile.lengthSync()} bytes');
     } else {
       print('Failed to create Excel file');
     }

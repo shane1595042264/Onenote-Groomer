@@ -4,6 +4,7 @@ import 'screens/home_screen.dart';
 import 'services/onenote_service.dart';
 import 'services/ollama_service.dart' as ollama;
 import 'services/excel_service.dart' as excel;
+import 'theme/app_theme.dart';
 
 void main() {
   // Ensure proper cleanup on app exit
@@ -45,19 +46,20 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         Provider<OneNoteService>.value(value: _oneNoteService),
         Provider<ollama.OllamaService>.value(value: _ollamaService),
         Provider<excel.ExcelService>.value(value: _excelService),
       ],
-      child: MaterialApp(
-        title: 'OneNote to Excel Converter',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-          useMaterial3: true,
-          brightness: Brightness.dark,
-        ),
-        home: const HomeScreen(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'OneNote to Excel Converter',
+            theme: themeProvider.currentTheme,
+            home: const HomeScreen(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
