@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../lib/services/excel_service.dart';
+import 'package:onenote_to_excel/services/excel_service.dart';
 
 void main() async {
   print('🧪 Testing Persistent Prompt and Smart File Handling');
@@ -46,7 +46,7 @@ Test custom prompt that should be remembered:
     ];
     
     // Create the original test file first
-    final originalTestFile = 'testing/test_file_handling.xlsx';
+    const originalTestFile = 'testing/test_file_handling.xlsx';
     print('Creating original test file: $originalTestFile');
     
     final originalPath = await excelService.writeExcelFile(

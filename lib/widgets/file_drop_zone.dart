@@ -9,6 +9,8 @@ class FileDropZone extends StatefulWidget {
   final Function(String) onFileDropped;
   final VoidCallback? onFileCancelled;
   final String? filePath;
+  final bool isDisabled;
+  final String? disabledReason;
 
   const FileDropZone({
     super.key,
@@ -17,6 +19,8 @@ class FileDropZone extends StatefulWidget {
     required this.onFileDropped,
     this.onFileCancelled,
     this.filePath,
+    this.isDisabled = false,
+    this.disabledReason,
   });
 
   @override
@@ -30,8 +34,62 @@ class _FileDropZoneState extends State<FileDropZone> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    // If disabled, show a disabled state with overlay
+    if (widget.isDisabled) {
+      return Stack(
+        children: [
+          // Disabled drop zone
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 150,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.3),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.block,
+                    size: 48,
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.title, 
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.disabledReason ?? 'Disabled',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    
     return DropTarget(
       onDragDone: (detail) {
+        if (widget.isDisabled) return; // Don't process if disabled
+        
         print('File dropped: ${detail.files.length} files'); // Debug log
         if (detail.files.isNotEmpty) {
           final file = detail.files.first;
@@ -52,14 +110,22 @@ class _FileDropZoneState extends State<FileDropZone> {
           }
         }
       },
-      onDragEntered: (detail) => setState(() => _isDragging = true),
-      onDragExited: (detail) => setState(() => _isDragging = false),
+      onDragEntered: (detail) {
+        if (!widget.isDisabled) setState(() => _isDragging = true);
+      },
+      onDragExited: (detail) {
+        if (!widget.isDisabled) setState(() => _isDragging = false);
+      },
       child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovering = true),
-        onExit: (_) => setState(() => _isHovering = false),
-        cursor: SystemMouseCursors.click,
+        onEnter: (_) {
+          if (!widget.isDisabled) setState(() => _isHovering = true);
+        },
+        onExit: (_) {
+          if (!widget.isDisabled) setState(() => _isHovering = false);
+        },
+        cursor: widget.isDisabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: _pickFile,
+          onTap: widget.isDisabled ? null : _pickFile,
           child: Stack(
             children: [
               AnimatedContainer(

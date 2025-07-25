@@ -1,5 +1,5 @@
 import 'dart:io';
-import '../lib/services/excel_service.dart';
+import 'package:onenote_to_excel/services/excel_service.dart';
 
 void main() async {
   print('🧪 Testing Smart File Handling');
@@ -15,7 +15,7 @@ void main() async {
     ];
     
     // Create the original test file first
-    final originalTestFile = 'testing/test_file_handling.xlsx';
+    const originalTestFile = 'testing/test_file_handling.xlsx';
     print('Creating original test file: $originalTestFile');
     
     final originalPath = await excelService.writeExcelFile(

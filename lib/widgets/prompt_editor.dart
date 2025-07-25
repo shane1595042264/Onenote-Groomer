@@ -344,7 +344,7 @@ Focus on financial transactions and budget information.''',
                         ? () => _savePrompt(showSnackbar: true)
                         : null,
                       icon: _isSaving 
-                        ? SizedBox(
+                        ? const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
@@ -352,8 +352,8 @@ Focus on financial transactions and budget information.''',
                               color: Colors.white,
                             ),
                           )
-                        : Icon(Icons.save, size: 16),
-                      label: Text('Save'),
+                        : const Icon(Icons.save, size: 16),
+                      label: const Text('Save'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         minimumSize: const Size(0, 32),
