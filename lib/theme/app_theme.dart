@@ -175,7 +175,7 @@ final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   
   // Color Scheme
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: ArchColors.primaryBlue,
     primaryContainer: ArchColors.darkAccent,
     secondary: ArchColors.lightBlue,
@@ -185,7 +185,6 @@ final ThemeData darkTheme = ThemeData(
     surface: ArchColors.darkSurface,
     surfaceContainer: ArchColors.darkCard,
     surfaceContainerHighest: ArchColors.darkGray,
-    background: ArchColors.darkBackground,
     error: ArchColors.red,
     errorContainer: ArchColors.darkRed,
     onPrimary: Colors.white,
@@ -193,14 +192,13 @@ final ThemeData darkTheme = ThemeData(
     onTertiary: Colors.white,
     onSurface: Colors.white,
     onSurfaceVariant: Color(0xFFE1E2E1),
-    onBackground: Colors.white,
     onError: Colors.white,
     outline: ArchColors.mediumGray,
     outlineVariant: ArchColors.lightGray,
   ),
   
   // App Bar Theme
-  appBarTheme: AppBarTheme(
+  appBarTheme: const AppBarTheme(
     backgroundColor: ArchColors.darkBackground,
     foregroundColor: Colors.white,
     elevation: 0,
@@ -237,7 +235,7 @@ final ThemeData darkTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     ),
   ),
   
@@ -257,26 +255,26 @@ final ThemeData darkTheme = ThemeData(
     fillColor: ArchColors.darkCard,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.mediumGray),
+      borderSide: const BorderSide(color: ArchColors.mediumGray),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.mediumGray),
+      borderSide: const BorderSide(color: ArchColors.mediumGray),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.primaryBlue, width: 2),
+      borderSide: const BorderSide(color: ArchColors.primaryBlue, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.red),
+      borderSide: const BorderSide(color: ArchColors.red),
     ),
-    labelStyle: TextStyle(color: ArchColors.lightBlue),
-    hintStyle: TextStyle(color: ArchColors.mediumGray),
+    labelStyle: const TextStyle(color: ArchColors.lightBlue),
+    hintStyle: const TextStyle(color: ArchColors.mediumGray),
   ),
   
   // Text Theme
-  textTheme: TextTheme(
+  textTheme: const TextTheme(
     displayLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     displayMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
     displaySmall: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -295,13 +293,13 @@ final ThemeData darkTheme = ThemeData(
   ),
   
   // Icon Theme
-  iconTheme: IconThemeData(
+  iconTheme: const IconThemeData(
     color: ArchColors.lightBlue,
     size: 24,
   ),
   
   // Divider Theme
-  dividerTheme: DividerThemeData(
+  dividerTheme: const DividerThemeData(
     color: ArchColors.mediumGray,
     thickness: 1,
   ),
@@ -329,7 +327,7 @@ final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   
   // Color Scheme
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: ArchColors.primaryBlue,
     primaryContainer: Color(0xFF80ABDC), // 50% tint of primary blue
     secondary: ArchColors.teal,
@@ -339,7 +337,6 @@ final ThemeData lightTheme = ThemeData(
     surface: Colors.white,
     surfaceContainer: Color(0xFFF5F5F5),
     surfaceContainerHighest: Color(0xFFE8E8E8),
-    background: Color(0xFFFAFAFA),
     error: ArchColors.red,
     errorContainer: Color(0xFFEAB6C1), // 50% tint of red
     onPrimary: Colors.white,
@@ -347,14 +344,13 @@ final ThemeData lightTheme = ThemeData(
     onTertiary: Colors.white,
     onSurface: Color(0xFF1A1A1A),
     onSurfaceVariant: Color(0xFF4D4D4D),
-    onBackground: Color(0xFF1A1A1A),
     onError: Colors.white,
     outline: Color(0xFFBDBDBD),
     outlineVariant: Color(0xFFE0E0E0),
   ),
   
   // App Bar Theme
-  appBarTheme: AppBarTheme(
+  appBarTheme: const AppBarTheme(
     backgroundColor: Colors.white,
     foregroundColor: ArchColors.darkGray,
     elevation: 0,
@@ -374,7 +370,7 @@ final ThemeData lightTheme = ThemeData(
     shadowColor: Colors.black.withOpacity(0.1),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
-      side: BorderSide(
+      side: const BorderSide(
         color: Color(0xFFE0E0E0),
         width: 1,
       ),
@@ -391,7 +387,7 @@ final ThemeData lightTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
     ),
   ),
   
@@ -408,29 +404,29 @@ final ThemeData lightTheme = ThemeData(
   // Input Decoration Theme
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: Color(0xFFF5F5F5),
+    fillColor: const Color(0xFFF5F5F5),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Color(0xFFBDBDBD)),
+      borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: Color(0xFFBDBDBD)),
+      borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.primaryBlue, width: 2),
+      borderSide: const BorderSide(color: ArchColors.primaryBlue, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: ArchColors.red),
+      borderSide: const BorderSide(color: ArchColors.red),
     ),
-    labelStyle: TextStyle(color: ArchColors.darkGray),
-    hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+    labelStyle: const TextStyle(color: ArchColors.darkGray),
+    hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
   ),
   
   // Text Theme
-  textTheme: TextTheme(
+  textTheme: const TextTheme(
     displayLarge: TextStyle(color: ArchColors.darkGray, fontWeight: FontWeight.bold),
     displayMedium: TextStyle(color: ArchColors.darkGray, fontWeight: FontWeight.bold),
     displaySmall: TextStyle(color: ArchColors.darkGray, fontWeight: FontWeight.bold),
@@ -449,13 +445,13 @@ final ThemeData lightTheme = ThemeData(
   ),
   
   // Icon Theme
-  iconTheme: IconThemeData(
+  iconTheme: const IconThemeData(
     color: ArchColors.primaryBlue,
     size: 24,
   ),
   
   // Divider Theme
-  dividerTheme: DividerThemeData(
+  dividerTheme: const DividerThemeData(
     color: Color(0xFFE0E0E0),
     thickness: 1,
   ),
@@ -466,13 +462,13 @@ final ThemeData lightTheme = ThemeData(
       if (states.contains(WidgetState.selected)) {
         return ArchColors.archGreen;
       }
-      return Color(0xFFBDBDBD);
+      return const Color(0xFFBDBDBD);
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
         return ArchColors.archGreen.withOpacity(0.3);
       }
-      return Color(0xFFE0E0E0);
+      return const Color(0xFFE0E0E0);
     }),
   ),
 );
@@ -485,7 +481,7 @@ final ThemeData lightTheme = ThemeData(
 final ThemeData originalPurpleDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF9B59B6),
     primaryContainer: Color(0xFF321353),
     secondary: Color(0xFFE91E63),
@@ -495,7 +491,6 @@ final ThemeData originalPurpleDarkTheme = ThemeData(
     surface: Color(0xFF1E1E1E),
     surfaceContainer: Color(0xFF2D2D30),
     surfaceContainerHighest: Color(0xFF333333),
-    background: Color(0xFF121212),
     onPrimary: Colors.white,
     onPrimaryContainer: Color(0xFFE1BEE7),
     onSecondary: Colors.white,
@@ -504,7 +499,6 @@ final ThemeData originalPurpleDarkTheme = ThemeData(
     onTertiaryContainer: Color(0xFFD1C4E9),
     onSurface: Colors.white,
     onSurfaceVariant: Color(0xFFB3B3B3),
-    onBackground: Colors.white,
     error: Color(0xFFCF6679),
     onError: Colors.black,
     outline: Color(0xFF4D4D4D),
@@ -514,7 +508,7 @@ final ThemeData originalPurpleDarkTheme = ThemeData(
 final ThemeData originalPurpleLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF9B59B6),
     primaryContainer: Color(0xFFE1BEE7),
     secondary: Color(0xFFE91E63),
@@ -524,7 +518,6 @@ final ThemeData originalPurpleLightTheme = ThemeData(
     surface: Colors.white,
     surfaceContainer: Color(0xFFF5F5F5),
     surfaceContainerHighest: Color(0xFFE0E0E0),
-    background: Color(0xFFFAFAFA),
   ),
 );
 
@@ -532,7 +525,7 @@ final ThemeData originalPurpleLightTheme = ThemeData(
 final ThemeData forestDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF4CAF50),
     primaryContainer: Color(0xFF2E7D32),
     secondary: Color(0xFF8BC34A),
@@ -542,14 +535,13 @@ final ThemeData forestDarkTheme = ThemeData(
     surface: Color(0xFF1B2E1A),
     surfaceContainer: Color(0xFF2A3E29),
     surfaceContainerHighest: Color(0xFF334D32),
-    background: Color(0xFF0F1F0E),
   ),
 );
 
 final ThemeData forestLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF4CAF50),
     primaryContainer: Color(0xFFC8E6C9),
     secondary: Color(0xFF8BC34A),
@@ -558,7 +550,6 @@ final ThemeData forestLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFA5D6A7),
     surface: Colors.white,
     surfaceContainer: Color(0xFFF1F8E9),
-    background: Color(0xFFF9FDF9),
   ),
 );
 
@@ -566,7 +557,7 @@ final ThemeData forestLightTheme = ThemeData(
 final ThemeData oceanDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF2196F3),
     primaryContainer: Color(0xFF1565C0),
     secondary: Color(0xFF03DAC6),
@@ -576,14 +567,13 @@ final ThemeData oceanDarkTheme = ThemeData(
     surface: Color(0xFF0F1B2E),
     surfaceContainer: Color(0xFF1A2A3E),
     surfaceContainerHighest: Color(0xFF24394D),
-    background: Color(0xFF081426),
   ),
 );
 
 final ThemeData oceanLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF2196F3),
     primaryContainer: Color(0xFFBBDEFB),
     secondary: Color(0xFF03DAC6),
@@ -592,7 +582,6 @@ final ThemeData oceanLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFB3E5FC),
     surface: Colors.white,
     surfaceContainer: Color(0xFFF3F9FF),
-    background: Color(0xFFF8FCFF),
   ),
 );
 
@@ -600,7 +589,7 @@ final ThemeData oceanLightTheme = ThemeData(
 final ThemeData sunsetDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFFFF5722),
     primaryContainer: Color(0xFFD84315),
     secondary: Color(0xFFFF9800),
@@ -610,14 +599,13 @@ final ThemeData sunsetDarkTheme = ThemeData(
     surface: Color(0xFF2E1B0F),
     surfaceContainer: Color(0xFF3E2A1A),
     surfaceContainerHighest: Color(0xFF4D3924),
-    background: Color(0xFF1F140A),
   ),
 );
 
 final ThemeData sunsetLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFFFF5722),
     primaryContainer: Color(0xFFFFCCBC),
     secondary: Color(0xFFFF9800),
@@ -626,7 +614,6 @@ final ThemeData sunsetLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFFFF9C4),
     surface: Colors.white,
     surfaceContainer: Color(0xFFFFF8F5),
-    background: Color(0xFFFFFCFA),
   ),
 );
 
@@ -634,7 +621,7 @@ final ThemeData sunsetLightTheme = ThemeData(
 final ThemeData midnightDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF3F51B5),
     primaryContainer: Color(0xFF303F9F),
     secondary: Color(0xFF7986CB),
@@ -644,14 +631,13 @@ final ThemeData midnightDarkTheme = ThemeData(
     surface: Color(0xFF0A0A1A),
     surfaceContainer: Color(0xFF141426),
     surfaceContainerHighest: Color(0xFF1E1E33),
-    background: Color(0xFF050510),
   ),
 );
 
 final ThemeData midnightLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF3F51B5),
     primaryContainer: Color(0xFFC5CAE9),
     secondary: Color(0xFF7986CB),
@@ -660,7 +646,6 @@ final ThemeData midnightLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFE1BEE7),
     surface: Colors.white,
     surfaceContainer: Color(0xFFF5F5FF),
-    background: Color(0xFFFAFAFF),
   ),
 );
 
@@ -668,7 +653,7 @@ final ThemeData midnightLightTheme = ThemeData(
 final ThemeData cherryDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFFE91E63),
     primaryContainer: Color(0xFFC2185B),
     secondary: Color(0xFFFF6B9D),
@@ -678,14 +663,13 @@ final ThemeData cherryDarkTheme = ThemeData(
     surface: Color(0xFF2E0F1A),
     surfaceContainer: Color(0xFF3E1A26),
     surfaceContainerHighest: Color(0xFF4D2433),
-    background: Color(0xFF1F0A12),
   ),
 );
 
 final ThemeData cherryLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFFE91E63),
     primaryContainer: Color(0xFFF8BBD9),
     secondary: Color(0xFFFF6B9D),
@@ -694,7 +678,6 @@ final ThemeData cherryLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFFCE4EC),
     surface: Colors.white,
     surfaceContainer: Color(0xFFFFF5F8),
-    background: Color(0xFFFFFAFC),
   ),
 );
 
@@ -702,7 +685,7 @@ final ThemeData cherryLightTheme = ThemeData(
 final ThemeData lavenderDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFFB39DDB),
     primaryContainer: Color(0xFF7E57C2),
     secondary: Color(0xFFD1C4E9),
@@ -712,14 +695,13 @@ final ThemeData lavenderDarkTheme = ThemeData(
     surface: Color(0xFF1A1426),
     surfaceContainer: Color(0xFF2A1E33),
     surfaceContainerHighest: Color(0xFF392940),
-    background: Color(0xFF12091A),
   ),
 );
 
 final ThemeData lavenderLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFFB39DDB),
     primaryContainer: Color(0xFFEDE7F6),
     secondary: Color(0xFFD1C4E9),
@@ -728,7 +710,6 @@ final ThemeData lavenderLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFFCE4EC),
     surface: Colors.white,
     surfaceContainer: Color(0xFFFAF8FF),
-    background: Color(0xFFFEFCFF),
   ),
 );
 
@@ -736,7 +717,7 @@ final ThemeData lavenderLightTheme = ThemeData(
 final ThemeData emberDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFFFF7043),
     primaryContainer: Color(0xFFD84315),
     secondary: Color(0xFFFFAB40),
@@ -746,14 +727,13 @@ final ThemeData emberDarkTheme = ThemeData(
     surface: Color(0xFF2E1A0F),
     surfaceContainer: Color(0xFF3E261A),
     surfaceContainerHighest: Color(0xFF4D3324),
-    background: Color(0xFF1F120A),
   ),
 );
 
 final ThemeData emberLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFFFF7043),
     primaryContainer: Color(0xFFFFCCBC),
     secondary: Color(0xFFFFAB40),
@@ -762,7 +742,6 @@ final ThemeData emberLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFFFE0D1),
     surface: Colors.white,
     surfaceContainer: Color(0xFFFFF8F5),
-    background: Color(0xFFFFFBF8),
   ),
 );
 
@@ -770,7 +749,7 @@ final ThemeData emberLightTheme = ThemeData(
 final ThemeData mintDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF26A69A),
     primaryContainer: Color(0xFF00695C),
     secondary: Color(0xFF4DB6AC),
@@ -780,14 +759,13 @@ final ThemeData mintDarkTheme = ThemeData(
     surface: Color(0xFF0F2E26),
     surfaceContainer: Color(0xFF1A3E33),
     surfaceContainerHighest: Color(0xFF244D40),
-    background: Color(0xFF0A1F1A),
   ),
 );
 
 final ThemeData mintLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF26A69A),
     primaryContainer: Color(0xFFB2DFDB),
     secondary: Color(0xFF4DB6AC),
@@ -796,7 +774,6 @@ final ThemeData mintLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFE0F7FA),
     surface: Colors.white,
     surfaceContainer: Color(0xFFF0FDF5),
-    background: Color(0xFFF8FFF9),
   ),
 );
 
@@ -804,7 +781,7 @@ final ThemeData mintLightTheme = ThemeData(
 final ThemeData stormDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: ColorScheme.dark(
+  colorScheme: const ColorScheme.dark(
     primary: Color(0xFF607D8B),
     primaryContainer: Color(0xFF455A64),
     secondary: Color(0xFF90A4AE),
@@ -814,14 +791,13 @@ final ThemeData stormDarkTheme = ThemeData(
     surface: Color(0xFF1A1F23),
     surfaceContainer: Color(0xFF262B30),
     surfaceContainerHighest: Color(0xFF33383D),
-    background: Color(0xFF12171A),
   ),
 );
 
 final ThemeData stormLightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     primary: Color(0xFF607D8B),
     primaryContainer: Color(0xFFCFD8DC),
     secondary: Color(0xFF90A4AE),
@@ -830,6 +806,5 @@ final ThemeData stormLightTheme = ThemeData(
     tertiaryContainer: Color(0xFFF5F5F5),
     surface: Colors.white,
     surfaceContainer: Color(0xFFF8F9FA),
-    background: Color(0xFFFCFCFC),
   ),
 );

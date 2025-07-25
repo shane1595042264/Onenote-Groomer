@@ -212,7 +212,7 @@ Map the existing columns to these requested fields.
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.background,
+              theme.colorScheme.surface,
               theme.colorScheme.surface,
             ],
           ),
@@ -226,7 +226,7 @@ Map the existing columns to these requested fields.
               Text(
                 'Input Files',
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -277,6 +277,10 @@ Map the existing columns to these requested fields.
                     child: FileDropZone(
                       title: 'OneNote File',
                       acceptedExtensions: const ['.one', '.onepkg'],
+                      isDisabled: _excelInputFilePath != null,
+                      disabledReason: _excelInputFilePath != null 
+                        ? 'Clear Excel file to use OneNote mode'
+                        : null,
                       onFileDropped: (path) {
                         setState(() {
                           _oneNoteFilePath = path;
@@ -315,6 +319,10 @@ Map the existing columns to these requested fields.
                     child: FileDropZone(
                       title: 'Excel File to Process',
                       acceptedExtensions: const ['.xlsx', '.xls'],
+                      isDisabled: _oneNoteFilePath != null,
+                      disabledReason: _oneNoteFilePath != null 
+                        ? 'Clear OneNote file to use Excel mode'
+                        : null,
                       onFileDropped: (path) async {
                         print('Excel file dropped: $path'); // Debug log
                         
@@ -596,7 +604,7 @@ Map the existing columns to these requested fields.
               Text(
                 'AI Processing Prompt',
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -722,13 +730,110 @@ Map the existing columns to these requested fields.
       print('Error loading Excel file: $e'); // Debug log
       
       if (mounted) {
+        // Create user-friendly error message
+        String userMessage = '';
+        String title = 'Unable to Process Excel File';
+        
+        if (e.toString().contains('Null check operator used on a null value')) {
+          userMessage = 'The Excel file appears to be corrupted or empty. Please check that:\n\n'
+              '• The file contains data in the first worksheet\n'
+              '• The file is not password protected\n'
+              '• The file is a valid Excel format (.xlsx or .xls)';
+        } else if (e.toString().contains('FormatException')) {
+          userMessage = 'The file format is not supported or the file is corrupted. Please:\n\n'
+              '• Make sure it\'s a valid Excel file (.xlsx or .xls)\n'
+              '• Try re-saving the file in Excel\n'
+              '• Check if the file is password protected';
+        } else if (e.toString().contains('FileSystemException')) {
+          userMessage = 'Cannot access the Excel file. Please check that:\n\n'
+              '• The file is not open in another program\n'
+              '• You have permission to read the file\n'
+              '• The file path is correct';
+        } else {
+          userMessage = 'An unexpected error occurred while reading the Excel file.\n\n'
+              'Error details: ${e.toString()}\n\n'
+              'Please try:\n'
+              '• Using a different Excel file\n'
+              '• Re-saving your Excel file\n'
+              '• Closing the file in other programs';
+        }
+        
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('Failed to read Excel file: $e'),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userMessage,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You can only process one file type at a time. Choose either OneNote extraction or Excel restructuring.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             actions: [
-              HoverableTextButton(
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Try Another File',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              FilledButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),
@@ -1063,5 +1168,108 @@ Map the existing columns to these requested fields.
       case ColorPreset.storm:
         return const Color(0xFF607D8B); // Blue-gray
     }
+  }
+
+  void _showModeConflictDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Choose One Mode',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'You can only choose one mode of converting at a time.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please choose either:',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.note, color: Colors.blue[300]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'OneNote Mode: Extract data from OneNote files and organize into Excel',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green[300]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Excel Mode: Restructure and reorganize existing Excel data',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'To switch modes, simply clear the current file and select a different file type.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it!'),
+          ),
+        ],
+      ),
+    );
   }
 }

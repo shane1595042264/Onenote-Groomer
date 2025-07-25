@@ -257,7 +257,7 @@ class ExcelService {
     if (await outputFile.exists()) {
       final availableFile = await _findAvailableFilename(outputFile.path);
       finalOutputFile = File(availableFile);
-      print('Original file exists/locked, using: ${availableFile}');
+      print('Original file exists/locked, using: $availableFile');
     }
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
@@ -273,7 +273,7 @@ class ExcelService {
           // Last attempt failed, try temp file approach with unique name
           try {
             final uniquePath = await _findAvailableFilename(finalOutputFile.path);
-            final tempPath = '${uniquePath}.tmp';
+            final tempPath = '$uniquePath.tmp';
             final tempFile = File(tempPath);
             await tempFile.writeAsBytes(fileBytes, flush: true);
 

@@ -1,7 +1,7 @@
 import 'dart:io';
-import '../lib/services/onenote_service.dart';
-import '../lib/services/ollama_service.dart';
-import '../lib/services/excel_service.dart';
+import 'package:onenote_to_excel/services/onenote_service.dart';
+import 'package:onenote_to_excel/services/ollama_service.dart';
+import 'package:onenote_to_excel/services/excel_service.dart';
 
 void main() async {
   print('Testing improved AI filtering for template content...');
@@ -22,7 +22,7 @@ void main() async {
       // Test with a small subset first
       final testPages = pages.take(3).toList();
       
-      final prompt = 'Extract: Company Name, Broker Name, Effective Date, Premium Amount';
+      const prompt = 'Extract: Company Name, Broker Name, Effective Date, Premium Amount';
       
       print('Processing ${testPages.length} test pages...');
       final results = await ollamaService.processPages(testPages, null, prompt);
