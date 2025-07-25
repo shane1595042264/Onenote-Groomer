@@ -1,0 +1,3 @@
+@echo off
+echo Starting OneNote Groomer...
+powershell -ExecutionPolicy Bypass -File "%~dp0start_onenote_groomer.ps1" -Silent

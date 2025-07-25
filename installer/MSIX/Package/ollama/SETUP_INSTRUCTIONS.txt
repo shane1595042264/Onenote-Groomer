@@ -1,0 +1,23 @@
+﻿# Ollama Setup Instructions
+
+## 馃 To complete the OneNote Groomer installation:
+
+### Step 1: Download Ollama
+1. Visit: https://ollama.com/download/windows
+2. Download the Windows installer (ollama-windows-amd64.zip)
+3. Extract the zip file
+4. Copy 'ollama.exe' to this 'ollama' folder
+
+### Step 2: Download AI Model
+1. Open Command Prompt in this directory
+2. Run: ollama\ollama.exe pull llama2:7b
+3. Wait for the model to download (~4GB)
+
+### Alternative: Auto-Setup Script
+Run the 'setup_ollama.bat' file to automatically download and configure Ollama.
+
+### Once setup is complete:
+- Run "OneNote Groomer.bat" to start the application
+- The app will automatically detect and use the bundled Ollama
+
+For support, visit: https://github.com/shane1595042264/Onenote-Groomer
