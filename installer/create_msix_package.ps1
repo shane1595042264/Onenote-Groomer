@@ -60,11 +60,10 @@ $makeppri = Find-SDKTool "makepri.exe"
 $makeappx = Find-SDKTool "makeappx.exe"
 $signtool = Find-SDKTool "signtool.exe"
 
-
 Write-Host "Tool locations:" -ForegroundColor Gray
-Write-Host ("  makepri.exe: " + (if ($makeppri) { $makeppri } else { 'Not found' })) -ForegroundColor Gray
-Write-Host ("  makeappx.exe: " + (if ($makeappx) { $makeappx } else { 'Not found' })) -ForegroundColor Gray
-Write-Host ("  signtool.exe: " + (if ($signtool) { $signtool } else { 'Not found' })) -ForegroundColor Gray
+Write-Host ("  makepri.exe: " + $(if ($makeppri) { $makeppri } else { 'Not found' })) -ForegroundColor Gray
+Write-Host ("  makeappx.exe: " + $(if ($makeappx) { $makeappx } else { 'Not found' })) -ForegroundColor Gray
+Write-Host ("  signtool.exe: " + $(if ($signtool) { $signtool } else { 'Not found' })) -ForegroundColor Gray
 
 if (-not $makeppri -or -not $makeappx) {
     Write-Host "❌ Windows SDK tools not found!" -ForegroundColor Red
@@ -95,7 +94,7 @@ New-Item -ItemType Directory -Path "$OutputPath\Package" -Force | Out-Null
 # Step 1: Create App Manifest
 Write-Host "📄 Creating Package Manifest..." -ForegroundColor Cyan
 
-$manifestContent = @"
+ $manifestContent = @"
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
@@ -105,15 +104,15 @@ $manifestContent = @"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="rescap mp uap uap3 desktop">
 
-  <Identity Name="OneNoteGroomer"
-            Publisher="$PublisherName"
+  <Identity Name="A-PLUS.OnenoteGroomer"
+            Publisher="CN=25D94FEB-B89E-4816-BB32-35995EAF1AFB"
             Version="$AppVersion" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>OneNote Groomer</DisplayName>
-    <PublisherDisplayName>Your Company Name</PublisherDisplayName>
+    <PublisherDisplayName>A-PLUS</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
     <Description>Convert OneNote files to Excel using AI. Extract, process, and organize your notes efficiently with built-in AI processing.</Description>
   </Properties>
@@ -123,7 +122,7 @@ $manifestContent = @"
   </Dependencies>
 
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="en-us"/>
   </Resources>
 
   <Applications>
@@ -156,7 +155,6 @@ $manifestContent = @"
 
   <Capabilities>
     <Capability Name="internetClient" />
-    <uap:Capability Name="documentsLibrary" />
     <uap:Capability Name="removableStorage" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>

@@ -7,15 +7,15 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="rescap mp uap uap3 desktop">
 
-  <Identity Name="OneNoteGroomer"
-            Publisher="CN=YourCompanyName"
+  <Identity Name="A-PLUS.OnenoteGroomer"
+            Publisher="CN=25D94FEB-B89E-4816-BB32-35995EAF1AFB"
             Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>OneNote Groomer</DisplayName>
-    <PublisherDisplayName>Your Company Name</PublisherDisplayName>
+    <PublisherDisplayName>A-PLUS</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
     <Description>Convert OneNote files to Excel using AI. Extract, process, and organize your notes efficiently with built-in AI processing.</Description>
   </Properties>
@@ -25,7 +25,7 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="en-us"/>
   </Resources>
 
   <Applications>
@@ -58,7 +58,6 @@
 
   <Capabilities>
     <Capability Name="internetClient" />
-    <uap:Capability Name="documentsLibrary" />
     <uap:Capability Name="removableStorage" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
