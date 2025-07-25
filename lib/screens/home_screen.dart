@@ -9,7 +9,7 @@ import '../widgets/prompt_editor.dart';
 import '../widgets/processing_status.dart';
 import '../widgets/hoverable_button.dart';
 import '../services/onenote_service.dart' as onenote;
-import '../services/ollama_service.dart' as ollama;
+import '../services/ollama_service_bundled.dart' as ollama;
 import '../services/excel_service.dart' as excel;
 import '../models/excel_template.dart';
 import '../theme/app_theme.dart';

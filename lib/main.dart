@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'services/onenote_service.dart';
-import 'services/ollama_service.dart' as ollama;
+import 'services/ollama_service_bundled.dart' as ollama;
 import 'services/excel_service.dart' as excel;
 import 'theme/app_theme.dart';
 
