@@ -1,15 +1,15 @@
-# OneNote Groomer - MSIX Package Creator for Microsoft Store
+# DocFlow AI - MSIX Package Creator for Microsoft Store
 # Creates a deployable MSIX package
 
 param(
-    [string]$SourcePath = ".\OneNoteGroomer-Installer",
+    [string]$SourcePath = ".\DocFlowAI-Installer",
     [string]$OutputPath = ".\MSIX",
     [string]$AppVersion = "1.0.0.0",
     [string]$PublisherName = "CN=YourCompanyName",
     [switch]$SkipSigning
 )
 
-Write-Host "📦 OneNote Groomer - MSIX Package Creator" -ForegroundColor Green
+Write-Host "📦 DocFlow AI - MSIX Package Creator" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
 
 # Check prerequisites and find Windows SDK tools
@@ -104,17 +104,17 @@ Write-Host "📄 Creating Package Manifest..." -ForegroundColor Cyan
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="rescap mp uap uap3 desktop">
 
-  <Identity Name="A-PLUS.OnenoteGroomer"
+  <Identity Name="A-PLUS.DocFlowAI"
             Publisher="CN=25D94FEB-B89E-4816-BB32-35995EAF1AFB"
             Version="$AppVersion" />
 
   <mp:PhoneIdentity PhoneProductId="12345678-1234-1234-1234-123456789012" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>OneNote Groomer</DisplayName>
+    <DisplayName>DocFlow AI</DisplayName>
     <PublisherDisplayName>A-PLUS</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
-    <Description>Convert OneNote files to Excel using AI. Extract, process, and organize your notes efficiently with built-in AI processing.</Description>
+    <Description>AI-powered document processing and Excel conversion. Transform your documents into structured data with intelligent extraction and formatting.</Description>
   </Properties>
 
   <Dependencies>
@@ -126,12 +126,12 @@ Write-Host "📄 Creating Package Manifest..." -ForegroundColor Cyan
   </Resources>
 
   <Applications>
-    <Application Id="OneNoteGroomer"
+    <Application Id="DocFlowAI"
                  Executable="onenote_to_excel.exe"
                  EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="OneNote Groomer"
-        Description="AI-powered OneNote to Excel converter"
+        DisplayName="DocFlow AI"
+        Description="AI-powered document processing and Excel conversion"
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">
@@ -141,7 +141,7 @@ Write-Host "📄 Creating Package Manifest..." -ForegroundColor Cyan
       
       <Extensions>
         <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="onenote">
+          <uap:FileTypeAssociation Name="documentfiles">
             <uap:SupportedFileTypes>
               <uap:FileType>.one</uap:FileType>
             </uap:SupportedFileTypes>
@@ -228,7 +228,7 @@ try {
 Write-Host "📦 Creating MSIX package..." -ForegroundColor Cyan
 
 try {
-    & $makeappx pack /d "$OutputPath\Package" /p "$OutputPath\OneNoteGroomer.msix" /o
+    & $makeappx pack /d "$OutputPath\Package" /p "$OutputPath\DocFlowAI.msix" /o
     Write-Host "✅ MSIX package created successfully" -ForegroundColor Green
 } catch {
     Write-Host "❌ Failed to create MSIX package: $($_.Exception.Message)" -ForegroundColor Red
@@ -248,11 +248,11 @@ if (-not $SkipSigning) {
         
         # Create a temporary self-signed certificate for testing
         try {
-            $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $PublisherName -KeyUsage DigitalSignature -FriendlyName "OneNote Groomer Code Signing" -CertStoreLocation "Cert:\CurrentUser\My"
+            $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $PublisherName -KeyUsage DigitalSignature -FriendlyName "DocFlow AI Code Signing" -CertStoreLocation "Cert:\CurrentUser\My"
             $certPassword = ConvertTo-SecureString -String "TempPassword123!" -Force -AsPlainText
             Export-PfxCertificate -Cert $cert -FilePath $certPath -Password $certPassword | Out-Null
             
-            & $signtool sign /fd SHA256 /a /f $certPath /p "TempPassword123!" "$OutputPath\OneNoteGroomer.msix"
+            & $signtool sign /fd SHA256 /a /f $certPath /p "TempPassword123!" "$OutputPath\DocFlowAI.msix"
             
             Remove-Item $certPath -Force
             Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
@@ -274,26 +274,26 @@ $submissionDir = "$OutputPath\StoreSubmission"
 New-Item -ItemType Directory -Path $submissionDir -Force | Out-Null
 
 # Copy MSIX package
-Copy-Item "$OutputPath\OneNoteGroomer.msix" -Destination $submissionDir
+Copy-Item "$OutputPath\DocFlowAI.msix" -Destination $submissionDir
 
 # Create submission notes
 $submissionNotes = @"
-# OneNote Groomer - Microsoft Store Submission Package
+# DocFlow AI - Microsoft Store Submission Package
 
 ## 📦 Package Information
-- **App Name**: OneNote Groomer
+- **App Name**: DocFlow AI
 - **Version**: $AppVersion
 - **Package Type**: MSIX
 - **Target Platforms**: Windows 10 (1809+), Windows 11
 
 ## 🎯 App Description
-OneNote Groomer is an AI-powered desktop application that converts OneNote files to Excel format. 
+DocFlow AI is an intelligent document processing application that transforms various document formats into structured Excel data. 
 Key features:
-- Drag & drop OneNote (.one) files
-- AI-powered content extraction
-- Excel template support
-- Local AI processing (bundled Ollama)
-- Privacy-focused (no cloud processing)
+- Drag & drop document processing
+- AI-powered content extraction and analysis
+- Excel template support and custom formatting
+- Local AI processing for maximum privacy
+- Smart data structuring and organization
 
 ## 🔧 Technical Details
 - **Framework**: Flutter Windows Desktop
@@ -335,7 +335,7 @@ Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
 $submissionNotes | Out-File -FilePath "$submissionDir\SUBMISSION_NOTES.md" -Encoding UTF8
 
 # Calculate package size
-$packageSize = (Get-Item "$OutputPath\OneNoteGroomer.msix").Length
+$packageSize = (Get-Item "$OutputPath\DocFlowAI.msix").Length
 $sizeMB = [math]::Round($packageSize / 1MB, 2)
 
 Write-Host "✅ Store submission package created!" -ForegroundColor Green
@@ -350,6 +350,6 @@ Write-Host "4. Create Microsoft Partner Center account" -ForegroundColor White
 Write-Host "5. Upload to Partner Center and complete store listing" -ForegroundColor White
 
 Write-Host "`n📁 Generated Files:" -ForegroundColor Yellow
-Write-Host "- OneNoteGroomer.msix (main package)" -ForegroundColor White
+Write-Host "- DocFlowAI.msix (main package)" -ForegroundColor White
 Write-Host "- SUBMISSION_NOTES.md (submission guide)" -ForegroundColor White
 Write-Host "- Package\ (source files for modifications)" -ForegroundColor White

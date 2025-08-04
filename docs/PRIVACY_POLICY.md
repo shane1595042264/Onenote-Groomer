@@ -1,10 +1,10 @@
-# OneNote Groomer Privacy Policy
+# DocFlow AI Privacy Policy
 
-*Last Updated: July 25, 2025*
+*Last Updated: August 4, 2025*
 
 ## 🔒 Privacy Commitment
 
-OneNote Groomer is designed with privacy as a core principle. We believe your data belongs to you, which is why our application:
+DocFlow AI is designed with privacy as a core principle. We believe your data belongs to you, which is why our application:
 
 - **Processes all data locally** on your device
 - **Never transmits your content** to external servers
@@ -14,9 +14,9 @@ OneNote Groomer is designed with privacy as a core principle. We believe your da
 ## 📋 Information We Collect
 
 ### Files and Document Content
-- **OneNote files (.one)**: When you provide OneNote files, we process their content locally on your device.
+- **Document files (.one, .docx, .pdf, etc.)**: When you provide document files, we process their content locally on your device.
 - **Excel files (.xlsx, .xls)**: When you provide Excel files, we process their content locally on your device.
-- **Generated output**: The application creates Excel files based on your processed OneNote content.
+- **Generated output**: The application creates Excel files based on your processed document content.
 
 ### Application Settings
 - **Custom prompts**: Your AI extraction prompts are saved locally to improve your user experience.
@@ -30,14 +30,14 @@ OneNote Groomer is designed with privacy as a core principle. We believe your da
 ## 💻 How We Use Information
 
 ### Local Processing Only
-All data processing in OneNote Groomer happens **exclusively on your device**:
+All data processing in DocFlow AI happens **exclusively on your device**:
 
 1. **AI Processing**: Our bundled Ollama AI engine runs completely locally. Your documents are never sent to external servers for processing.
-2. **File Conversion**: All file operations (reading OneNote files, creating Excel spreadsheets) happen on your device.
+2. **File Conversion**: All file operations (reading document files, creating Excel spreadsheets) happen on your device.
 3. **Settings Storage**: Application preferences are stored locally in your Windows user profile.
 
 ### No External Communication
-OneNote Groomer does not:
+DocFlow AI does not:
 - Send your files to the cloud
 - Transmit document content to external servers
 - Share your data with third parties
@@ -47,7 +47,7 @@ OneNote Groomer does not:
 
 ### Local Storage Locations
 - **Processed files**: Saved to your specified locations only
-- **Application settings**: Stored in `%APPDATA%\Roaming\OneNoteGroomer\`
+- **Application settings**: Stored in `%APPDATA%\Roaming\DocFlowAI\`
 - **Temporary files**: May be created during processing in your system's temp directory and removed after use
 
 ### Data Retention
@@ -57,7 +57,7 @@ OneNote Groomer does not:
 
 ## 📱 Required App Permissions
 
-OneNote Groomer requires the following permissions:
+DocFlow AI requires the following permissions:
 
 - **Internet Client**: Required for model downloading capabilities (optional, only if you choose to download additional AI models)
 - **File System Access**: To read your OneNote files and write Excel files
@@ -74,7 +74,7 @@ We implement reasonable security measures to protect your data:
 
 ## 👨‍👩‍👧‍👦 Children's Privacy
 
-OneNote Groomer is intended for general audiences and does not knowingly collect data from children under 13.
+DocFlow AI is intended for general audiences and does not knowingly collect data from children under 13.
 
 ## 📝 Changes to This Policy
 

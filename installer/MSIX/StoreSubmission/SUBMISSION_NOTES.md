@@ -1,19 +1,19 @@
-﻿# OneNote Groomer - Microsoft Store Submission Package
+﻿# DocFlow AI - Microsoft Store Submission Package
 
 ## 馃摝 Package Information
-- **App Name**: OneNote Groomer
+- **App Name**: DocFlow AI
 - **Version**: 1.0.0.0
 - **Package Type**: MSIX
 - **Target Platforms**: Windows 10 (1809+), Windows 11
 
 ## 馃幆 App Description
-OneNote Groomer is an AI-powered desktop application that converts OneNote files to Excel format. 
+DocFlow AI is an intelligent document processing application that transforms various document formats into structured Excel data. 
 Key features:
-- Drag & drop OneNote (.one) files
-- AI-powered content extraction
-- Excel template support
-- Local AI processing (bundled Ollama)
-- Privacy-focused (no cloud processing)
+- Drag & drop document processing
+- AI-powered content extraction and analysis
+- Excel template support and custom formatting
+- Local AI processing for maximum privacy
+- Smart data structuring and organization
 
 ## 馃敡 Technical Details
 - **Framework**: Flutter Windows Desktop
@@ -49,4 +49,4 @@ Key features:
 5. Fill out store listing details
 6. Submit for certification
 
-Build Date: 2025-07-25 13:31:28
+Build Date: 2025-08-04 11:08:31
