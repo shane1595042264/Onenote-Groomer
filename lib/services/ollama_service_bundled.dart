@@ -253,10 +253,11 @@ class OllamaService {
     buffer.writeln('Content: ${page.content}');
     
     if (template != null) {
-      buffer.writeln('\nPlease extract information and format as JSON with these fields:');
+      buffer.writeln('\nIMPORTANT: You MUST use these EXACT field names in your JSON response:');
       for (final column in template.columns) {
         buffer.writeln('  "$column": "value"');
       }
+      buffer.writeln('\nDo NOT create your own field names. Use ONLY the field names listed above.');
     } else {
       buffer.writeln('\nPlease process this content and return structured data as JSON.');
     }
@@ -485,22 +486,57 @@ class OllamaService {
           final jsonString = generatedText.substring(jsonStart, jsonEnd + 1);
           final extractedData = json.decode(jsonString) as Map<String, dynamic>;
           
-          return {
+          // Return the extracted data directly as separate columns, not wrapped in "extracted_data"
+          final result = <String, dynamic>{
             'page_title': page.title,
-            'extracted_data': extractedData,
             'raw_response': generatedText,
           };
+          
+          // STRICT COLUMN MAPPING - only add fields that match expected column names
+          if (template != null) {
+            for (final expectedColumn in template.columns) {
+              // Try to find a matching field in the AI response using fuzzy matching
+              String? matchedValue;
+              
+              // First try exact match
+              if (extractedData.containsKey(expectedColumn)) {
+                matchedValue = extractedData[expectedColumn]?.toString();
+              } else {
+                // Try fuzzy matching for common variations
+                final normalizedExpected = expectedColumn.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+                
+                for (final entry in extractedData.entries) {
+                  final normalizedKey = entry.key.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+                  if (normalizedKey == normalizedExpected || 
+                      normalizedKey.contains(normalizedExpected) ||
+                      normalizedExpected.contains(normalizedKey)) {
+                    matchedValue = entry.value?.toString();
+                    break;
+                  }
+                }
+              }
+              
+              result[expectedColumn] = matchedValue ?? '';
+            }
+          } else {
+            // If no template, add all fields from extractedData
+            extractedData.forEach((key, value) {
+              result[key] = value;
+            });
+          }
+          
+          return result;
         } else {
           return {
             'page_title': page.title,
-            'extracted_data': {'content': generatedText},
+            'content': generatedText,
             'raw_response': generatedText,
           };
         }
       } catch (e) {
         return {
           'page_title': page.title,
-          'extracted_data': {'content': generatedText},
+          'content': generatedText,
           'raw_response': generatedText,
           'parse_warning': 'Could not parse as JSON: $e',
         };

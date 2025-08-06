@@ -157,23 +157,26 @@ class OllamaService {
           continue;
         }
         
-        // AGGRESSIVE TEMPLATE DETECTION: Skip if contains too many field-like terms
-        final templateTerms = ['pricing', 'position', 'technical', 'sic code', 'naics', 'description', 
-                              'mfl fire', 'hazard grade', 'paydex', 'financial stress', 'appetite',
-                              'domiciled state', 'ancillary states', 'opportunity', 'submissions',
-                              'quoted date', 'subjectivities', 'operations', 'broker', 'industry group',
-                              'action items', 'competing', 'deviate', 'justification', 'commission',
-                              'payment plan', 'exposures', 'controls', 'terrorism', 'locations'];
-        
-        final templateTermCount = templateTerms.where((term) => 
-            value.toLowerCase().contains(term)).length;
-        
-        if (templateTermCount > 2) {
-          continue;  // Skip responses with too many template terms
+        // SUPER STRICT FILTERING: Only allow EXACT field name matches from the prompt
+        String? matchingPromptField = null;
+        for (final promptField in allowedFields) {
+          if (fieldName.trim() == promptField.trim()) {
+            matchingPromptField = promptField;
+            break;
+          }
         }
         
-        // STRICT FILTERING: Only allow fields that match the prompt
-        final matchingPromptField = _findMatchingPromptField(fieldName, allowedFields);
+        // If no exact match, try case-insensitive exact match
+        if (matchingPromptField == null) {
+          for (final promptField in allowedFields) {
+            if (fieldName.trim().toLowerCase() == promptField.trim().toLowerCase()) {
+              matchingPromptField = promptField;
+              break;
+            }
+          }
+        }
+        
+        // Only accept if we found an exact match
         if (matchingPromptField != null) {
           final cleanedValue = _cleanValue(value);
           // Update if we don't have this field yet or if the new value is better
@@ -182,6 +185,7 @@ class OllamaService {
             result[matchingPromptField] = cleanedValue;
           }
         }
+        // REJECT ALL VARIATIONS - no fuzzy matching, no synonyms, no similar names
       }
     }
     
@@ -436,34 +440,29 @@ class OllamaService {
       basePrompt.writeln(page.content);
     } else {
       // Custom prompt-based extraction - derive fields from user's prompt
-      basePrompt.writeln('Extract ONLY the following specific information from the text below.');
-      basePrompt.writeln('CRITICAL RULES:');
-      basePrompt.writeln('1. Provide ONLY actual values, not descriptions or templates');
-      basePrompt.writeln('2. Do NOT include field names, prompts, or boilerplate text');
-      basePrompt.writeln('3. Keep each response under 50 words');
-      basePrompt.writeln('4. If no specific value exists, write "N/A"');
-      basePrompt.writeln('5. Do NOT copy any template text or field lists');
-      basePrompt.writeln('');
-      basePrompt.writeln('Requirements: ${customPrompt.isNotEmpty ? customPrompt : 'Extract key business information'}');
+      basePrompt.writeln('Extract data from the text and format it as EXACTLY these field names only:');
       basePrompt.writeln('');
       
       // Parse the custom prompt to suggest field names
       final suggestedFields = _extractFieldNamesFromPrompt(customPrompt);
       if (suggestedFields.isNotEmpty) {
-        basePrompt.writeln('Provide EXACTLY these fields and NOTHING else:');
+        basePrompt.writeln('MANDATORY FORMAT - Use EXACTLY these field names, no variations:');
         for (final field in suggestedFields) {
-          basePrompt.writeln('$field: [specific value only, or N/A]');
+          basePrompt.writeln('$field: [value or N/A]');
         }
         basePrompt.writeln('');
-        basePrompt.writeln('IMPORTANT: Only provide the ${suggestedFields.length} fields listed above.');
-        basePrompt.writeln('Do not add any additional fields or information.');
-        basePrompt.writeln('Do not include explanatory text or comments.');
-        basePrompt.writeln('Do not copy any template text or field descriptions.');
+        basePrompt.writeln('STRICT RULES:');
+        basePrompt.writeln('1. Use EXACTLY the ${suggestedFields.length} field names above - no variations, synonyms, or similar names');
+        basePrompt.writeln('2. Do NOT create additional fields like "${suggestedFields.first.replaceAll(' ', '')}", "company_name", "CompanyName", etc.');
+        basePrompt.writeln('3. If no value exists for a field, write "N/A"');
+        basePrompt.writeln('4. Keep values under 50 words');
+        basePrompt.writeln('5. Do NOT include explanations, templates, or additional text');
+        basePrompt.writeln('6. Output ONLY the ${suggestedFields.length} specified fields, nothing more');
       } else {
         // Fallback if we can't parse the prompt
-        basePrompt.writeln('Provide information in field:value format.');
-        basePrompt.writeln('Create appropriate field names based on the requirements above.');
-        basePrompt.writeln('Keep values specific and under 50 words each.');
+        basePrompt.writeln('Extract key business information in field:value format.');
+        basePrompt.writeln('Keep field names simple and values under 50 words.');
+        basePrompt.writeln('Use "N/A" if no specific value exists.');
       }
       
       basePrompt.writeln('');

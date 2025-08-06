@@ -112,35 +112,21 @@ class ExcelService {
       final excel = Excel.createExcel();
       final sheet = excel['Sheet1'];
 
-      // Determine columns - use template columns if provided
+      // Determine columns - only use columns from AI response, no default metadata
       final allColumns = <String>[];
 
       if (templateColumns != null && templateColumns.isNotEmpty) {
+        // Use template columns first
         allColumns.addAll(templateColumns);
 
         // Add any additional columns from data that aren't in template
         final additionalColumns = _extractAllColumns(cleanedData)
-            .where(
-                (col) => !templateColumns.contains(col) && !col.startsWith('_'))
+            .where((col) => !templateColumns.contains(col))
             .toList();
         allColumns.addAll(additionalColumns);
       } else {
+        // Use all columns from the AI response data
         allColumns.addAll(_extractAllColumns(cleanedData));
-      }
-
-      // Always add metadata columns at the end
-      final metadataColumns = [
-        '_page_number',
-        '_page_title',
-        '_section',
-        '_created_date',
-        '_raw_content'
-      ];
-
-      for (final metaCol in metadataColumns) {
-        if (!allColumns.contains(metaCol)) {
-          allColumns.add(metaCol);
-        }
       }
 
       // Write headers with formatting

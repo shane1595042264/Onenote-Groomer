@@ -45,35 +45,31 @@ class OneNoteService {
 
       print('Reading OneNote file: $filePath');
       
-      // First try to load from extracted JSON data (if available)
+      // First try to load from extracted JSON data (ONLY for this specific file)
       try {
-        final jsonPages = await _loadFromExtractedJson();
+        final jsonPages = await _loadFromExtractedJson(filePath);
         if (jsonPages.isNotEmpty) {
           pages.addAll(jsonPages);
-          print('Successfully loaded ${jsonPages.length} pages from extracted JSON data');
+          print('Successfully loaded ${jsonPages.length} pages from extracted JSON data for this specific file');
           return pages;
         }
       } catch (e) {
-        print('JSON data loading failed: $e, trying PowerShell extraction');
+        print('JSON data loading failed: $e, trying COM extraction');
       }
       
-      // Try PowerShell extraction
+      // Try COM extraction as fallback
       try {
-        final psPages = await _extractUsingPowerShell(filePath);
-        if (psPages.isNotEmpty) {
-          pages.addAll(psPages);
-          print('Successfully extracted ${psPages.length} pages using PowerShell');
+        final comPages = await _extractUsingCOM(filePath);
+        if (comPages.isNotEmpty) {
+          pages.addAll(comPages);
+          print('Successfully extracted ${comPages.length} pages using COM');
           return pages;
         }
       } catch (e) {
-        print('PowerShell extraction failed: $e, falling back to file parsing');
+        print('COM extraction failed: $e');
       }
       
-      // Fallback to improved file parsing
-      final bytes = await file.readAsBytes();
-      final filePages = await _extractUsingAdvancedParsing(bytes, filePath);
-      pages.addAll(filePages);
-      
+      // If we get here, nothing worked - return error page
       if (pages.isEmpty) {
         pages.add(OneNotePage(
           id: 'error-no-content',
@@ -118,31 +114,75 @@ File: $filePath''',
     try {
       print('Attempting COM automation extraction...');
       
-      // Try to use PowerShell to access OneNote COM object
+      // Use PowerShell to access OneNote COM object directly - NO PARSING!
       final result = await Process.run('powershell', [
         '-Command',
         '''
         try {
           \$oneNote = New-Object -ComObject OneNote.Application
-          \$notebookXml = ""
-          \$oneNote.GetHierarchy("", [Microsoft.Office.Interop.OneNote.HierarchyScope]::hsNotebooks, [ref]\$notebookXml)
           
-          # Open the specific file (if it's a .one file, we need to import it first)
+          # Import the .one file to get access to its content
           \$filePath = "${filePath.replaceAll('\\', '\\\\')}"
+          Write-Host "Opening OneNote file: \$filePath"
           
-          if (\$filePath.EndsWith(".one")) {
-            # For .one files, try to import or open
-            Write-Host "Processing .one file: \$filePath"
+          # Open the file
+          \$sectionId = ""
+          \$oneNote.OpenHierarchy(\$filePath, "", [ref]\$sectionId, [Microsoft.Office.Interop.OneNote.CreateFileType]::cftSection)
+          
+          # Get the hierarchy to find pages
+          \$hierarchyXml = ""
+          \$oneNote.GetHierarchy(\$sectionId, [Microsoft.Office.Interop.OneNote.HierarchyScope]::hsPages, [ref]\$hierarchyXml)
+          
+          # Simple regex to find page IDs and names - NO XML PARSING
+          \$pagePattern = 'ID="([^"]+)"[^>]*name="([^"]*)"'
+          \$pageMatches = [regex]::Matches(\$hierarchyXml, \$pagePattern)
+          
+          Write-Host "Found \$(\$pageMatches.Count) pages"
+          
+          foreach (\$match in \$pageMatches) {
+            \$pageId = \$match.Groups[1].Value
+            \$pageTitle = \$match.Groups[2].Value
+            if (\$pageTitle -eq "") { \$pageTitle = "Untitled Page" }
             
-            # Try to read file content directly using .NET
-            \$bytes = [System.IO.File]::ReadAllBytes(\$filePath)
-            \$text = [System.Text.Encoding]::UTF8.GetString(\$bytes) -replace '[\\x00-\\x1F]', ' '
-            \$text = \$text -replace '\\s+', ' '
+            # Get the page content XML
+            \$pageXml = ""
+            \$oneNote.GetPageContent(\$pageId, [ref]\$pageXml, [Microsoft.Office.Interop.OneNote.PageInfo]::piAll)
             
-            # Output the raw text for parsing
-            Write-Host "CONTENT_START"
-            Write-Host \$text
-            Write-Host "CONTENT_END"
+            # Extract ALL text content using multiple patterns - NO XML PARSING
+            \$pageText = ""
+            
+            # Method 1: Extract from <one:T> tags
+            \$textPattern1 = '<one:T[^>]*>([^<]+)</one:T>'
+            \$textMatches1 = [regex]::Matches(\$pageXml, \$textPattern1)
+            foreach (\$textMatch in \$textMatches1) {
+              \$pageText += \$textMatch.Groups[1].Value + " "
+            }
+            
+            # Method 2: Extract from CDATA sections (fixed regex)
+            \$cdataPattern = '<!\\\[CDATA\\\[([^\\\]]+)\\\]\\\]>'
+            \$cdataMatches = [regex]::Matches(\$pageXml, \$cdataPattern)
+            foreach (\$cdataMatch in \$cdataMatches) {
+              \$pageText += \$cdataMatch.Groups[1].Value + " "
+            }
+            
+            # Method 3: Extract any text between XML tags (broader capture)
+            \$generalTextPattern = '>([^<]+)<'
+            \$generalMatches = [regex]::Matches(\$pageXml, \$generalTextPattern)
+            foreach (\$generalMatch in \$generalMatches) {
+              \$text = \$generalMatch.Groups[1].Value.Trim()
+              if (\$text.Length -gt 2 -and \$text -notmatch "^[0-9\\.\\-]+\$" -and \$text -notmatch "^[a-f0-9\\-]+\$") {
+                \$pageText += \$text + " "
+              }
+            }
+            
+            # Clean up the text
+            \$pageText = \$pageText -replace '\s+', ' '
+            \$pageText = \$pageText.Trim()
+            
+            Write-Host "PAGE_START"
+            Write-Host "Title: \$pageTitle"
+            Write-Host "Content: \$pageText"
+            Write-Host "PAGE_END"
           }
           
           Write-Host "SUCCESS"
@@ -154,17 +194,50 @@ File: $filePath''',
       
       if (result.exitCode == 0) {
         final output = result.stdout.toString();
-        if (output.contains('CONTENT_START') && output.contains('CONTENT_END')) {
-          final contentStart = output.indexOf('CONTENT_START') + 'CONTENT_START'.length;
-          final contentEnd = output.indexOf('CONTENT_END');
-          if (contentEnd > contentStart) {
-            final content = output.substring(contentStart, contentEnd).trim();
-            if (content.isNotEmpty) {
-              final parsedPages = await _parseExtractedContent(content, filePath);
-              pages.addAll(parsedPages);
+        print('PowerShell output: $output');
+        
+        // Parse individual pages from the output
+        final pageMatches = RegExp(r'PAGE_START\s*\n(.*?)\nPAGE_END', dotAll: true).allMatches(output);
+        
+        for (final match in pageMatches) {
+          final pageData = match.group(1)?.trim() ?? '';
+          
+          // Extract title and content
+          String title = 'Untitled';
+          String content = '';
+          
+          final lines = pageData.split('\n');
+          for (final line in lines) {
+            if (line.startsWith('Title: ')) {
+              title = line.substring(7).trim();
+            } else if (line.startsWith('Content: ')) {
+              content = line.substring(9).trim();
             }
           }
+          
+          if (content.isNotEmpty) {
+            pages.add(OneNotePage(
+              id: pages.length.toString(),
+              title: title,
+              content: content,
+              createdTime: DateTime.now(),
+              lastModifiedTime: DateTime.now(),
+              parentSection: 'Imported Section',
+            ));
+          } else {
+            // Add pages with empty content too - user wants to see all pages in progress
+            pages.add(OneNotePage(
+              id: pages.length.toString(),
+              title: title,
+              content: 'No content found on this page',
+              createdTime: DateTime.now(),
+              lastModifiedTime: DateTime.now(),
+              parentSection: 'Imported Section',
+            ));
+          }
         }
+        
+        print('Extracted ${pages.length} pages from COM automation');
       } else {
         throw Exception('PowerShell COM extraction failed: ${result.stderr}');
       }
@@ -521,61 +594,68 @@ File: $filePath''',
     return metadata;
   }
 
-  Future<List<OneNotePage>> _loadFromExtractedJson() async {
+  Future<List<OneNotePage>> _loadFromExtractedJson([String? currentFilePath]) async {
     final pages = <OneNotePage>[];
     
     try {
-      // Check for the extracted business data JSON file in multiple locations
-      final possiblePaths = [
-        'extracted_business_data.json',
-        'output_samples/extracted_business_data.json',
-        'legacy/extracted_business_data.json',
-      ];
-      
-      File? jsonFile;
-      for (final path in possiblePaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          jsonFile = file;
-          break;
+      // If we have a current file path, only look for JSON that corresponds to this file
+      if (currentFilePath != null) {
+        final fileName = currentFilePath.split('\\').last.split('.').first;
+        final possiblePaths = [
+          '${fileName}_extracted_business_data.json',
+          'extracted_business_data_${fileName}.json',
+        ];
+        
+        File? jsonFile;
+        for (final path in possiblePaths) {
+          final file = File(path);
+          if (await file.exists()) {
+            jsonFile = file;
+            break;
+          }
         }
-      }
-      
-      if (jsonFile == null) {
-        print('No extracted JSON data found in any location');
+        
+        if (jsonFile == null) {
+          print('No extracted JSON data found for this specific file: $currentFilePath');
+          return pages; // Return empty - don't fall back to generic files
+        }
+        
+        final jsonContent = await jsonFile.readAsString();
+        final jsonData = jsonDecode(jsonContent) as List<dynamic>;
+        
+        print('Loading ${jsonData.length} business entries from JSON for this specific file');
+        
+        for (final entry in jsonData) {
+          final businessData = entry as Map<String, dynamic>;
+          
+          // Extract key information
+          final pageName = businessData['PageName'] ?? 'Unknown Page';
+          final sectionName = businessData['SectionName'] ?? 'Unknown Section';
+          final content = businessData['Content'] ?? '';
+          
+          // Clean up HTML entities and tags from content only
+          final cleanContent = _cleanHtmlContent(content);
+          
+          // Only add pages that have meaningful content
+          if (cleanContent.isNotEmpty && cleanContent.trim().length > 10) {
+            pages.add(OneNotePage(
+              id: 'page-${DateTime.now().millisecondsSinceEpoch}-${pages.length}',
+              title: pageName.isNotEmpty ? pageName : 'Page ${pages.length + 1}',
+              content: cleanContent,  // RAW content only - let AI do the work
+              createdTime: DateTime.now(),
+              lastModifiedTime: DateTime.now(),
+              parentSection: sectionName,
+            ));
+          }
+        }
+        
+        print('Successfully loaded ${pages.length} valid business pages for this specific file');
         return pages;
       }
       
-      final jsonContent = await jsonFile.readAsString();
-      final jsonData = jsonDecode(jsonContent) as List<dynamic>;
-      
-      print('Loading ${jsonData.length} business entries from JSON');
-      
-      for (final entry in jsonData) {
-        final businessData = entry as Map<String, dynamic>;
-        
-        // Extract key information
-        final pageName = businessData['PageName'] ?? 'Unknown Page';
-        final sectionName = businessData['SectionName'] ?? 'Unknown Section';
-        final content = businessData['Content'] ?? '';
-        
-        // Clean up HTML entities and tags from content only
-        final cleanContent = _cleanHtmlContent(content);
-        
-        // Only add pages that have meaningful content
-        if (cleanContent.isNotEmpty && cleanContent.trim().length > 10) {
-          pages.add(OneNotePage(
-            id: 'page-${DateTime.now().millisecondsSinceEpoch}-${pages.length}',
-            title: pageName.isNotEmpty ? pageName : 'Page ${pages.length + 1}',
-            content: cleanContent,  // RAW content only - let AI do the work
-            createdTime: DateTime.now(),
-            lastModifiedTime: DateTime.now(),
-            parentSection: sectionName,
-          ));
-        }
-      }
-      
-      print('Successfully loaded ${pages.length} valid business pages');
+      // NO FALLBACK - Don't load generic cached JSON files
+      print('No file path provided for JSON loading - skipping cached data');
+      return pages;
       
     } catch (e) {
       print('Error loading extracted JSON data: $e');
@@ -588,31 +668,16 @@ File: $filePath''',
     final pages = <OneNotePage>[];
     
     try {
-      print('Running PowerShell extraction script...');
+      print('PowerShell extraction not available - script missing');
       
-      // Run the PowerShell extraction script
-      final result = await Process.run(
-        'powershell',
-        [
-          '-ExecutionPolicy', 'Bypass',
-          '-File', 'extract_all_business_data.ps1'
-        ],
-        workingDirectory: Directory.current.path,
-      );
-      
-      if (result.exitCode == 0) {
-        print('PowerShell extraction completed successfully');
-        // Load the results from the JSON file created by the script
-        return await _loadFromExtractedJson();
-      } else {
-        print('PowerShell extraction failed: ${result.stderr}');
-      }
+      // Don't try to run PowerShell script, just return empty
+      // This forces the system to show the "No Content Found" page instead of loading cached data
       
     } catch (e) {
-      print('Error running PowerShell extraction: $e');
+      print('Error in PowerShell extraction: $e');
     }
     
-    return pages;
+    return pages; // Always return empty - no cached data loading
   }
 
   String _cleanHtmlContent(String content) {

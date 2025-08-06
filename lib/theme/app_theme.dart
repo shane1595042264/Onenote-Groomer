@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum ColorPreset {
-  arch('Arch Linux', 'Official Arch Linux colors'),
+  arch('Arch Blue', 'Official Arch colors'),
   originalPurple('Original Purple', 'Classic dark purple theme'),
   forest('Forest', 'Green nature theme'),
   ocean('Ocean', 'Blue ocean depths'),

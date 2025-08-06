@@ -286,6 +286,11 @@ Map the existing columns to these requested fields.
                           _oneNoteFilePath = path;
                           _excelInputFilePath = null; // Clear Excel input when OneNote is selected
                           _excelInputData = null;
+                          // RESET PROCESSING STATE FOR NEW FILE
+                          _outputFilePath = null;
+                          _statusMessage = '';
+                          _progress = 0.0;
+                          _isProcessing = false;
                         });
                       },
                       onFileCancelled: () {
@@ -331,6 +336,11 @@ Map the existing columns to these requested fields.
                           _excelInputFilePath = path;
                           _oneNoteFilePath = null; // Clear OneNote when Excel is selected
                           _isLoadingExcelInput = true; // Show loading state
+                          // RESET PROCESSING STATE FOR NEW FILE
+                          _outputFilePath = null;
+                          _statusMessage = '';
+                          _progress = 0.0;
+                          _isProcessing = false;
                         });
                         
                         // Force a brief UI update to show visual feedback
@@ -532,6 +542,11 @@ Map the existing columns to these requested fields.
                 onFileDropped: (path) async {
                   setState(() {
                     _excelTemplatePath = path;
+                    // RESET PROCESSING STATE FOR NEW TEMPLATE
+                    _outputFilePath = null;
+                    _statusMessage = '';
+                    _progress = 0.0;
+                    _isProcessing = false;
                   });
                   await _loadExcelTemplate(path);
                 },
