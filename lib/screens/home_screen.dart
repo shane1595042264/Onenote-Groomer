@@ -100,7 +100,7 @@ Map the existing columns to these requested fields.
               size: 28,
             ),
             const SizedBox(width: 12),
-            const Text('OneNote to Excel Converter'),
+            const Text('DocFlow AI'),
           ],
         ),
         actions: [
@@ -887,11 +887,28 @@ Map the existing columns to these requested fields.
           _progress = 0.3;
         });
 
-        extractedData = await ollamaService.processExcelData(
+        final rawExcelData = await ollamaService.processExcelData(
           _excelInputData!,
           _customPrompt,
           maxRows: 1000, // Limit for large files
         );
+
+        // Extract just the processed_data from each row for Excel output
+        extractedData = rawExcelData.map((row) {
+          if (row.containsKey('processed_data') && row['processed_data'] is Map) {
+            return Map<String, dynamic>.from(row['processed_data']);
+          } else {
+            // Fallback if structure is different
+            return <String, dynamic>{
+              'Client or company name': 'Processing error',
+              'Deal value or pricing': 'Processing error',
+              'Sales stage or status': 'Processing error',
+              'Contact information': 'Processing error',
+              'Next steps or actions': 'Processing error',
+              'Closing date': 'Processing error',
+            };
+          }
+        }).toList();
 
         outputPath = _excelInputFilePath!
             .replaceAll(RegExp(r'\.(xlsx|xls)$'), '_processed.xlsx');
@@ -1239,7 +1256,7 @@ Map the existing columns to these requested fields.
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'OneNote Mode: Extract data from OneNote files and organize into Excel',
+                        'Document Processing: Extract data from documents and organize into Excel',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),

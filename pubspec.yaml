@@ -1,5 +1,5 @@
-name: onenote_to_excel
-description: Convert OneNote files to Excel using AI
+name: docflow_ai
+description: DocFlow AI - Transform documents into structured data with AI
 version: 1.0.0+1
 
 environment:

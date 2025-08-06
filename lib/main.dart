@@ -54,7 +54,7 @@ class _MyAppState extends State<MyApp> {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'OneNote to Excel Converter',
+            title: 'DocFlow AI - AI-Powered Data Extraction',
             theme: themeProvider.currentTheme,
             home: const HomeScreen(),
             debugShowCheckedModeBanner: false,

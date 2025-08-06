@@ -367,7 +367,16 @@ class OllamaService {
     final buffer = StringBuffer();
     
     buffer.writeln('EXCEL DATA PROCESSING TASK:');
-    buffer.writeln('Headers: ${headers.join(', ')}');
+    buffer.writeln('Extract business-relevant information from this Excel data and organize it into exactly these 6 fields:');
+    buffer.writeln();
+    buffer.writeln('1. Client or company name');
+    buffer.writeln('2. Deal value or pricing');
+    buffer.writeln('3. Sales stage or status');
+    buffer.writeln('4. Contact information');
+    buffer.writeln('5. Next steps or actions');
+    buffer.writeln('6. Closing date');
+    buffer.writeln();
+    buffer.writeln('Source Headers: ${headers.join(', ')}');
     buffer.writeln();
     buffer.writeln('CUSTOM INSTRUCTIONS:');
     buffer.writeln(customPrompt);
@@ -379,8 +388,16 @@ class OllamaService {
     }
     
     buffer.writeln();
-    buffer.writeln('Please process this data according to the custom instructions and return a JSON array where each element corresponds to a processed row.');
-    buffer.writeln('Format: [{"processed_field1": "value1", "processed_field2": "value2"}, ...]');
+    buffer.writeln('For each row, extract information for these exact 6 fields. Respond in plain text format:');
+    buffer.writeln();
+    buffer.writeln('Client or company name: [extracted value or "Not found"]');
+    buffer.writeln('Deal value or pricing: [extracted value or "Not found"]');
+    buffer.writeln('Sales stage or status: [extracted value or "Not found"]');
+    buffer.writeln('Contact information: [extracted value or "Not found"]');
+    buffer.writeln('Next steps or actions: [extracted value or "Not found"]');
+    buffer.writeln('Closing date: [extracted value or "Not found"]');
+    buffer.writeln();
+    buffer.writeln('Separate each row with "---" on a new line.');
     
     return buffer.toString();
   }
@@ -408,52 +425,35 @@ class OllamaService {
         return results;
       }
 
-      try {
-        // Try to extract JSON array from response
-        final jsonStart = generatedText.indexOf('[');
-        final jsonEnd = generatedText.lastIndexOf(']');
-        
-        if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
-          final jsonString = generatedText.substring(jsonStart, jsonEnd + 1);
-          final extractedArray = json.decode(jsonString) as List;
+      // Split response by rows (separated by "---")
+      final rowSeparator = '---';
+      final rowTexts = generatedText.split(rowSeparator);
+      
+      for (int i = 0; i < batch.length; i++) {
+        if (i < rowTexts.length) {
+          final rowText = rowTexts[i].trim();
+          final parsedRow = _parseExcelTextResponse(rowText);
           
-          for (int i = 0; i < batch.length; i++) {
-            if (i < extractedArray.length) {
-              results.add({
-                'row_index': batchIndex * batch.length + i,
-                'processed_data': extractedArray[i],
-                'original_data': batch[i],
-                'raw_response': generatedText,
-              });
-            } else {
-              results.add({
-                'row_index': batchIndex * batch.length + i,
-                'error': 'No processed data for this row',
-                'original_data': batch[i],
-              });
-            }
-          }
-        } else {
-          // Fallback: return the text response for each row
-          for (int i = 0; i < batch.length; i++) {
-            results.add({
-              'row_index': batchIndex * batch.length + i,
-              'processed_data': {'content': generatedText},
-              'original_data': batch[i],
-              'raw_response': generatedText,
-              'parse_warning': 'Could not parse as JSON array',
-            });
-          }
-        }
-      } catch (e) {
-        // JSON parsing failed, return error for each row
-        for (int i = 0; i < batch.length; i++) {
           results.add({
             'row_index': batchIndex * batch.length + i,
-            'processed_data': {'content': generatedText},
+            'processed_data': parsedRow,
             'original_data': batch[i],
-            'raw_response': generatedText,
-            'parse_error': 'JSON parsing failed: $e',
+            'raw_response': rowText,
+          });
+        } else {
+          // Not enough parsed rows, create empty entry
+          results.add({
+            'row_index': batchIndex * batch.length + i,
+            'processed_data': {
+              'Client or company name': 'Not found',
+              'Deal value or pricing': 'Not found',
+              'Sales stage or status': 'Not found',
+              'Contact information': 'Not found',
+              'Next steps or actions': 'Not found',
+              'Closing date': 'Not found',
+            },
+            'original_data': batch[i],
+            'parse_warning': 'No parsed data for this row',
           });
         }
       }
@@ -469,6 +469,44 @@ class OllamaService {
     }
     
     return results;
+  }
+
+  Map<String, dynamic> _parseExcelTextResponse(String text) {
+    final fieldNames = [
+      'Client or company name',
+      'Deal value or pricing',
+      'Sales stage or status',
+      'Contact information',
+      'Next steps or actions',
+      'Closing date',
+    ];
+
+    final extractedData = <String, dynamic>{};
+
+    for (final fieldName in fieldNames) {
+      // Use regex to find the field and its value
+      final pattern = RegExp(
+        r'(?:^|\n)\s*' + RegExp.escape(fieldName) + r'\s*:\s*(.+?)(?=\n(?:[A-Z]|$)|\$)',
+        multiLine: true,
+        caseSensitive: false,
+        dotAll: true,
+      );
+
+      final match = pattern.firstMatch(text);
+      if (match != null) {
+        String value = match.group(1)?.trim() ?? 'Not found';
+        // Clean up the value
+        value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+        if (value.toLowerCase() == 'not found' || value.isEmpty) {
+          value = 'Not found';
+        }
+        extractedData[fieldName] = value;
+      } else {
+        extractedData[fieldName] = 'Not found';
+      }
+    }
+
+    return extractedData;
   }
 
   Map<String, dynamic> _processResponse(

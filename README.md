@@ -1,15 +1,15 @@
-# OneNote Groomer
+# DocFlow AI
 
 <div align="center">
-  <img src="docs/images/logo.png" alt="OneNote Groomer Logo" width="200"/>
+  <img src="docs/images/logo.png" alt="DocFlow AI Logo" width="200"/>
   <br>
-  <em>Transform OneNote files into organized Excel spreadsheets with AI-powered extraction</em>
+  <em>Transform documents into structured data with AI-powered extraction</em>
   <br><br>
 </div>
 
 ## 🚀 Project Overview
 
-OneNote Groomer is a desktop application that uses AI to extract structured data from OneNote files and convert it into organized Excel spreadsheets. It runs entirely locally, using a bundled Ollama AI engine for privacy-focused content extraction.
+DocFlow AI is a desktop application that uses AI to extract structured data from OneNote files and convert it into organized Excel spreadsheets. It runs entirely locally, using a bundled Ollama AI engine for privacy-focused content extraction.
 
 ### Core Features
 - 🔄 Convert OneNote (.one) files to Excel spreadsheets
