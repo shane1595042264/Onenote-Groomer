@@ -11,6 +11,7 @@ import '../widgets/hoverable_button.dart';
 import '../services/onenote_service.dart' as onenote;
 import '../services/ollama_service_bundled.dart' as ollama;
 import '../services/excel_service.dart' as excel;
+import '../services/word_service.dart';
 import '../models/excel_template.dart';
 import '../theme/app_theme.dart';
 
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _oneNoteFilePath;
   String? _excelInputFilePath;  // New: Excel file to process
+  String? _wordFilePath;        // New: Word file to process
   String? _excelTemplatePath;
   String? _outputFilePath;
   ExcelTemplate? _excelTemplate;
@@ -231,37 +233,53 @@ Map the existing columns to these requested fields.
               ),
               const SizedBox(height: 8),
               // Mode Indicator
-              if (_oneNoteFilePath != null || _excelInputFilePath != null) ...[
+              if (_oneNoteFilePath != null || _excelInputFilePath != null || _wordFilePath != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: _oneNoteFilePath != null 
                       ? theme.colorScheme.primary.withOpacity(0.1)
-                      : theme.colorScheme.tertiary.withOpacity(0.1),
+                      : _excelInputFilePath != null
+                        ? theme.colorScheme.tertiary.withOpacity(0.1)
+                        : theme.colorScheme.secondary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _oneNoteFilePath != null 
                         ? theme.colorScheme.primary.withOpacity(0.3)
-                        : theme.colorScheme.tertiary.withOpacity(0.3),
+                        : _excelInputFilePath != null
+                          ? theme.colorScheme.tertiary.withOpacity(0.3)
+                          : theme.colorScheme.secondary.withOpacity(0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _oneNoteFilePath != null ? Icons.description : Icons.table_chart,
+                        _oneNoteFilePath != null 
+                          ? Icons.description 
+                          : _excelInputFilePath != null
+                            ? Icons.table_chart
+                            : Icons.article,
                         color: _oneNoteFilePath != null 
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.tertiary,
+                          : _excelInputFilePath != null
+                            ? theme.colorScheme.tertiary
+                            : theme.colorScheme.secondary,
                         size: 16,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _oneNoteFilePath != null ? 'OneNote Processing Mode' : 'Excel Processing Mode',
+                        _oneNoteFilePath != null 
+                          ? 'OneNote Processing Mode' 
+                          : _excelInputFilePath != null
+                            ? 'Excel Processing Mode'
+                            : 'Word Processing Mode',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: _oneNoteFilePath != null 
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.tertiary,
+                            : _excelInputFilePath != null
+                              ? theme.colorScheme.tertiary
+                              : theme.colorScheme.secondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -277,14 +295,15 @@ Map the existing columns to these requested fields.
                     child: FileDropZone(
                       title: 'OneNote File',
                       acceptedExtensions: const ['.one', '.onepkg'],
-                      isDisabled: _excelInputFilePath != null,
-                      disabledReason: _excelInputFilePath != null 
-                        ? 'Clear Excel file to use OneNote mode'
+                      isDisabled: _excelInputFilePath != null || _wordFilePath != null,
+                      disabledReason: _excelInputFilePath != null || _wordFilePath != null
+                        ? 'Clear other files to use OneNote mode'
                         : null,
                       onFileDropped: (path) {
                         setState(() {
                           _oneNoteFilePath = path;
-                          _excelInputFilePath = null; // Clear Excel input when OneNote is selected
+                          _excelInputFilePath = null; // Clear Excel when OneNote is selected
+                          _wordFilePath = null;       // Clear Word when OneNote is selected
                           _excelInputData = null;
                           // RESET PROCESSING STATE FOR NEW FILE
                           _outputFilePath = null;
@@ -301,32 +320,32 @@ Map the existing columns to these requested fields.
                       filePath: _oneNoteFilePath,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: theme.colorScheme.outline.withOpacity(0.3),
                       ),
                     ),
                     child: Text(
                       'OR',
-                      style: theme.textTheme.labelLarge?.copyWith(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: FileDropZone(
-                      title: 'Excel File to Process',
+                      title: 'Excel File',
                       acceptedExtensions: const ['.xlsx', '.xls'],
-                      isDisabled: _oneNoteFilePath != null,
-                      disabledReason: _oneNoteFilePath != null 
-                        ? 'Clear OneNote file to use Excel mode'
+                      isDisabled: _oneNoteFilePath != null || _wordFilePath != null,
+                      disabledReason: _oneNoteFilePath != null || _wordFilePath != null
+                        ? 'Clear other files to use Excel mode'
                         : null,
                       onFileDropped: (path) async {
                         print('Excel file dropped: $path'); // Debug log
@@ -335,6 +354,7 @@ Map the existing columns to these requested fields.
                         setState(() {
                           _excelInputFilePath = path;
                           _oneNoteFilePath = null; // Clear OneNote when Excel is selected
+                          _wordFilePath = null;    // Clear Word when Excel is selected
                           _isLoadingExcelInput = true; // Show loading state
                           // RESET PROCESSING STATE FOR NEW FILE
                           _outputFilePath = null;
@@ -359,11 +379,92 @@ Map the existing columns to these requested fields.
                       filePath: _excelInputFilePath,
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      'OR',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FileDropZone(
+                      title: 'Word File',
+                      acceptedExtensions: const ['.docx'],
+                      isDisabled: _oneNoteFilePath != null || _excelInputFilePath != null,
+                      disabledReason: _oneNoteFilePath != null || _excelInputFilePath != null
+                        ? 'Clear other files to use Word mode'
+                        : null,
+                      onFileDropped: (path) async {
+                        print('Word file dropped: $path'); // Debug log
+                        
+                        setState(() {
+                          _wordFilePath = path;
+                          _oneNoteFilePath = null;   // Clear OneNote when Word is selected
+                          _excelInputFilePath = null; // Clear Excel when Word is selected
+                          _excelInputData = null;
+                          // RESET PROCESSING STATE FOR NEW FILE
+                          _outputFilePath = null;
+                          _statusMessage = '';
+                          _progress = 0.0;
+                          _isProcessing = false;
+                        });
+                      },
+                      onFileCancelled: () {
+                        setState(() {
+                          _wordFilePath = null;
+                        });
+                      },
+                      filePath: _wordFilePath,
+                    ),
+                  ),
                 ],
               ),
               
+              // Format Support Information
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainer.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Supported formats: .xlsx, .xls, .one, .onepkg, .docx. Note: .xlsb and .doc files are not supported - please convert to .xlsx or .docx first.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
               // File Selection Feedback
-              if (_oneNoteFilePath != null || _excelInputFilePath != null) ...[
+              if (_oneNoteFilePath != null || _excelInputFilePath != null || _wordFilePath != null) ...[
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -414,11 +515,55 @@ Map the existing columns to these requested fields.
                         ),
                         ),
                       )
+                    else if (_wordFilePath != null)
+                      Expanded(
+                        child: MouseRegion(
+                          onEnter: (_) => setState(() => _isHoveringOneNoteInfo = true),
+                          onExit: (_) => setState(() => _isHoveringOneNoteInfo = false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withOpacity(_isHoveringOneNoteInfo ? 0.15 : 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.purple.withOpacity(_isHoveringOneNoteInfo ? 0.5 : 0.3)),
+                              boxShadow: _isHoveringOneNoteInfo ? [
+                                BoxShadow(
+                                  color: Colors.purple.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ] : null,
+                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '📝 Word File Selected:',
+                                style: TextStyle(
+                                  color: Colors.purple[300],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _wordFilePath!.split('\\').last,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        ),
+                      )
                     else 
                       const Expanded(child: SizedBox()),
-                    
-                    if (_oneNoteFilePath != null && _excelInputFilePath != null)
-                      const SizedBox(width: 16),
                     
                     if (_excelInputFilePath != null)
                       Expanded(
@@ -537,7 +682,9 @@ Map the existing columns to these requested fields.
                   ? 'Excel Template - Structure for OneNote output'
                   : _excelInputFilePath != null 
                     ? 'Excel Template - Target structure for processed data'
-                    : 'Excel Template',
+                    : _wordFilePath != null
+                      ? 'Excel Template - Structure for Word output'
+                      : 'Excel Template',
                 acceptedExtensions: const ['.xlsx', '.xls'],
                 onFileDropped: (path) async {
                   setState(() {
@@ -643,7 +790,7 @@ Map the existing columns to these requested fields.
               const SizedBox(height: 24),
               // Process Button
               HoverableButton(
-                onPressed: (_oneNoteFilePath != null || _excelInputFilePath != null) && !_isProcessing
+                onPressed: (_oneNoteFilePath != null || _excelInputFilePath != null || _wordFilePath != null) && !_isProcessing
                     ? _processFile
                     : null,
                 backgroundColor: const Color(0xFF9B59B6),
@@ -661,7 +808,9 @@ Map the existing columns to these requested fields.
                       ? 'Process Excel File' 
                       : _oneNoteFilePath != null
                         ? 'Process OneNote File'
-                        : 'Select a file to process',
+                        : _wordFilePath != null
+                          ? 'Process Word File'
+                          : 'Select a file to process',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -749,7 +898,18 @@ Map the existing columns to these requested fields.
         String userMessage = '';
         String title = 'Unable to Process Excel File';
         
-        if (e.toString().contains('Null check operator used on a null value')) {
+        // Check if it's an XLSB file
+        if (path.toLowerCase().endsWith('.xlsb')) {
+          title = 'XLSB Format Not Supported';
+          userMessage = 'Excel Binary Workbook (.xlsb) files are not currently supported.\n\n'
+              'To use this file with DocFlow AI:\n\n'
+              '1. Open the file in Microsoft Excel\n'
+              '2. Click "File" → "Save As"\n'
+              '3. Choose "Excel Workbook (*.xlsx)" format\n'
+              '4. Save with a new name\n'
+              '5. Upload the new .xlsx file\n\n'
+              'We may add .xlsb support in future versions.';
+        } else if (e.toString().contains('Null check operator used on a null value')) {
           userMessage = 'The Excel file appears to be corrupted or empty. Please check that:\n\n'
               '• The file contains data in the first worksheet\n'
               '• The file is not password protected\n'
@@ -912,6 +1072,49 @@ Map the existing columns to these requested fields.
 
         outputPath = _excelInputFilePath!
             .replaceAll(RegExp(r'\.(xlsx|xls)$'), '_processed.xlsx');
+
+      } else if (_wordFilePath != null) {
+        // Process Word file
+        setState(() {
+          _statusMessage = 'Extracting text from Word document...';
+          _progress = 0.3;
+        });
+
+        final wordText = await WordService.extractTextFromFile(_wordFilePath!);
+
+        setState(() {
+          _statusMessage = 'Processing Word document with AI...';
+          _progress = 0.5;
+        });
+
+        final rawWordData = await ollamaService.processWordContent(
+          wordText,
+          _customPrompt,
+        );
+
+        // Extract the processed data for Excel output
+        extractedData = rawWordData.map((result) {
+          // Remove technical fields and keep only the 6 main fields
+          final data = <String, dynamic>{};
+          
+          final requiredFields = [
+            'Client or company name',
+            'Deal value or pricing',
+            'Sales stage or status',
+            'Contact information',
+            'Next steps or actions',
+            'Closing date'
+          ];
+          
+          for (final field in requiredFields) {
+            data[field] = result[field]?.toString() ?? 'Not found';
+          }
+          
+          return data;
+        }).toList();
+
+        outputPath = _wordFilePath!
+            .replaceAll(RegExp(r'\.docx$'), '_processed.xlsx');
 
       } else {
         // Process OneNote file (existing logic)

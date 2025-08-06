@@ -363,6 +363,55 @@ class OllamaService {
     return results;
   }
 
+  /// Process Word document text content using AI
+  Future<List<Map<String, dynamic>>> processWordContent(
+    String wordText,
+    String customPrompt,
+  ) async {
+    // Ensure Ollama is ready
+    final isReady = await _checkOllamaHealth();
+    if (!isReady) {
+      if (_isBundledOllama) {
+        await _startBundledOllama();
+      } else {
+        throw Exception('Ollama is not running. Please start Ollama first.');
+      }
+    }
+
+    // Ensure required model is available
+    const model = 'llama2:latest';
+    final hasModel = await ensureModelAvailable(model);
+    if (!hasModel) {
+      throw Exception('Required model $model is not available.');
+    }
+
+    final results = <Map<String, dynamic>>[];
+
+    try {
+      final prompt = _buildWordPrompt(wordText, customPrompt);
+      final response = await _makeRequest(prompt, model);
+
+      if (response.statusCode == 200) {
+        final result = _processWordResponse(response, wordText);
+        results.add(result);
+      } else {
+        print('Error processing Word document: ${response.statusCode}');
+        results.add({
+          'document_type': 'Word Document',
+          'error': 'HTTP ${response.statusCode}: ${response.body}',
+        });
+      }
+    } catch (e) {
+      print('Exception processing Word document: $e');
+      results.add({
+        'document_type': 'Word Document',
+        'error': 'Exception: $e',
+      });
+    }
+
+    return results;
+  }
+
   String _buildExcelPrompt(List<Map<String, dynamic>> batch, List<String> headers, String customPrompt) {
     final buffer = StringBuffer();
     
@@ -400,6 +449,102 @@ class OllamaService {
     buffer.writeln('Separate each row with "---" on a new line.');
     
     return buffer.toString();
+  }
+
+  String _buildWordPrompt(String wordText, String customPrompt) {
+    final buffer = StringBuffer();
+    
+    buffer.writeln('WORD DOCUMENT PROCESSING TASK:');
+    buffer.writeln('Extract business-relevant information from this Word document and organize it into exactly these 6 fields:');
+    buffer.writeln();
+    buffer.writeln('1. Client or company name');
+    buffer.writeln('2. Deal value or pricing');
+    buffer.writeln('3. Sales stage or status');
+    buffer.writeln('4. Contact information');
+    buffer.writeln('5. Next steps or actions');
+    buffer.writeln('6. Closing date');
+    buffer.writeln();
+    buffer.writeln('CUSTOM INSTRUCTIONS:');
+    buffer.writeln(customPrompt);
+    buffer.writeln();
+    buffer.writeln('DOCUMENT CONTENT:');
+    buffer.writeln(wordText);
+    buffer.writeln();
+    buffer.writeln('Extract information for these exact 6 fields. Respond in plain text format:');
+    buffer.writeln();
+    buffer.writeln('Client or company name: [extracted value or "Not found"]');
+    buffer.writeln('Deal value or pricing: [extracted value or "Not found"]');
+    buffer.writeln('Sales stage or status: [extracted value or "Not found"]');
+    buffer.writeln('Contact information: [extracted value or "Not found"]');
+    buffer.writeln('Next steps or actions: [extracted value or "Not found"]');
+    buffer.writeln('Closing date: [extracted value or "Not found"]');
+    
+    return buffer.toString();
+  }
+
+  Map<String, dynamic> _processWordResponse(http.Response response, String wordText) {
+    try {
+      final responseData = json.decode(response.body);
+      final generatedText = responseData['response'] as String?;
+      
+      if (generatedText == null) {
+        return {
+          'document_type': 'Word Document',
+          'error': 'No response from AI model',
+        };
+      }
+
+      // Parse the AI response using the same text parsing method as Excel
+      final result = _parseWordTextResponse(generatedText);
+      result['document_type'] = 'Word Document';
+      result['raw_response'] = generatedText;
+      
+      return result;
+    } catch (e) {
+      return {
+        'document_type': 'Word Document',
+        'error': 'Failed to process response: $e',
+      };
+    }
+  }
+
+  Map<String, dynamic> _parseWordTextResponse(String text) {
+    final result = <String, dynamic>{};
+    
+    // Use the same regex pattern as Excel processing for consistency
+    final fieldPattern = RegExp(r'(Client or company name|Deal value or pricing|Sales stage or status|Contact information|Next steps or actions|Closing date)\s*:\s*([^\n]+)', caseSensitive: false);
+    final matches = fieldPattern.allMatches(text);
+    
+    final requiredFields = [
+      'Client or company name',
+      'Deal value or pricing', 
+      'Sales stage or status',
+      'Contact information',
+      'Next steps or actions',
+      'Closing date'
+    ];
+    
+    // Initialize all fields with empty values
+    for (final field in requiredFields) {
+      result[field] = 'Not found';
+    }
+    
+    // Extract found values
+    for (final match in matches) {
+      final fieldName = match.group(1)?.trim() ?? '';
+      var value = match.group(2)?.trim() ?? '';
+      
+      if (fieldName.isNotEmpty) {
+        // Clean up the value
+        value = value.replaceAll(RegExp(r'^\[|\]$'), '').trim();
+        if (value.toLowerCase() == 'not found' || value.isEmpty) {
+          value = 'Not found';
+        }
+        result[fieldName] = value;
+      }
+    }
+
+    return result;
   }
 
   List<Map<String, dynamic>> _processExcelResponse(

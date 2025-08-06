@@ -1,0 +1,28 @@
+This is a test Word document for DocFlow AI processing.
+
+CLIENT INFORMATION:
+Company Name: TechCorp Solutions Inc.
+Contact Person: John Smith
+Email: john.smith@techcorp.com
+Phone: (555) 123-4567
+
+DEAL DETAILS:
+Product/Service: Enterprise Software License
+Deal Value: $125,000
+Current Stage: Negotiation Phase
+Closing Date: March 15, 2025
+
+NEXT STEPS:
+1. Schedule technical review meeting
+2. Prepare final proposal
+3. Get executive approval
+4. Send contract for signature
+
+STATUS UPDATE:
+Client is very interested and ready to move forward. Waiting for budget approval from their finance team. Expecting positive response by end of this week.
+
+MEETING NOTES:
+- Discussed implementation timeline
+- Reviewed technical requirements 
+- Addressed security concerns
+- Confirmed pricing structure
