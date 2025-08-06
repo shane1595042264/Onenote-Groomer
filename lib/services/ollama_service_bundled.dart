@@ -236,31 +236,41 @@ class OllamaService {
   String _buildPrompt(OneNotePage page, ExcelTemplate? template, String customPrompt) {
     final buffer = StringBuffer();
     
-    if (template != null) {
-      buffer.writeln('TEMPLATE STRUCTURE:');
-      for (final column in template.columns) {
-        buffer.writeln('- $column');
-      }
-      buffer.writeln();
-    }
+    // Define exact field names from custom prompt
+    final requiredFields = [
+      'Client or company name',
+      'Deal value or pricing',
+      'Sales stage or status',
+      'Contact information',
+      'Next steps or actions',
+      'Closing date'
+    ];
     
-    buffer.writeln('CUSTOM INSTRUCTIONS:');
+    buffer.writeln('EXTRACT THE FOLLOWING INFORMATION:');
+    for (final field in requiredFields) {
+      buffer.writeln('- $field');
+    }
+    buffer.writeln();
+    
+    buffer.writeln('INSTRUCTIONS:');
     buffer.writeln(customPrompt);
     buffer.writeln();
     
-    buffer.writeln('PAGE CONTENT TO PROCESS:');
+    buffer.writeln('PAGE CONTENT:');
     buffer.writeln('Title: ${page.title}');
     buffer.writeln('Content: ${page.content}');
+    buffer.writeln();
     
-    if (template != null) {
-      buffer.writeln('\nIMPORTANT: You MUST use these EXACT field names in your JSON response:');
-      for (final column in template.columns) {
-        buffer.writeln('  "$column": "value"');
-      }
-      buffer.writeln('\nDo NOT create your own field names. Use ONLY the field names listed above.');
-    } else {
-      buffer.writeln('\nPlease process this content and return structured data as JSON.');
+    buffer.writeln('IMPORTANT: Return ONLY a JSON object using these EXACT field names:');
+    buffer.writeln('{');
+    for (int i = 0; i < requiredFields.length; i++) {
+      final comma = i < requiredFields.length - 1 ? ',' : '';
+      buffer.writeln('  "${requiredFields[i]}": "value"$comma');
     }
+    buffer.writeln('}');
+    buffer.writeln();
+    buffer.writeln('Do NOT use variations like "Client Name", "client_name", "Company Name", etc.');
+    buffer.writeln('Use the EXACT field names listed above.');
     
     return buffer.toString();
   }
@@ -479,6 +489,7 @@ class OllamaService {
       }
 
       try {
+        // Try to parse as JSON first
         final jsonStart = generatedText.indexOf('{');
         final jsonEnd = generatedText.lastIndexOf('}');
         
@@ -486,60 +497,34 @@ class OllamaService {
           final jsonString = generatedText.substring(jsonStart, jsonEnd + 1);
           final extractedData = json.decode(jsonString) as Map<String, dynamic>;
           
-          // Return the extracted data directly as separate columns, not wrapped in "extracted_data"
+          // Return the extracted data directly as separate columns
           final result = <String, dynamic>{
             'page_title': page.title,
             'raw_response': generatedText,
           };
           
-          // STRICT COLUMN MAPPING - only add fields that match expected column names
-          if (template != null) {
-            for (final expectedColumn in template.columns) {
-              // Try to find a matching field in the AI response using fuzzy matching
-              String? matchedValue;
-              
-              // First try exact match
-              if (extractedData.containsKey(expectedColumn)) {
-                matchedValue = extractedData[expectedColumn]?.toString();
-              } else {
-                // Try fuzzy matching for common variations
-                final normalizedExpected = expectedColumn.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
-                
-                for (final entry in extractedData.entries) {
-                  final normalizedKey = entry.key.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
-                  if (normalizedKey == normalizedExpected || 
-                      normalizedKey.contains(normalizedExpected) ||
-                      normalizedExpected.contains(normalizedKey)) {
-                    matchedValue = entry.value?.toString();
-                    break;
-                  }
-                }
-              }
-              
-              result[expectedColumn] = matchedValue ?? '';
-            }
-          } else {
-            // If no template, add all fields from extractedData
-            extractedData.forEach((key, value) {
-              result[key] = value;
-            });
+          // Use exact field names - no fuzzy matching
+          final requiredFields = [
+            'Client or company name',
+            'Deal value or pricing',
+            'Sales stage or status',
+            'Contact information',
+            'Next steps or actions',
+            'Closing date'
+          ];
+          
+          for (final expectedField in requiredFields) {
+            result[expectedField] = extractedData[expectedField]?.toString() ?? '';
           }
           
           return result;
         } else {
-          return {
-            'page_title': page.title,
-            'content': generatedText,
-            'raw_response': generatedText,
-          };
+          // No JSON found, try to parse the text format the AI is actually using
+          return _parseTextResponse(generatedText, page, template, customPrompt);
         }
       } catch (e) {
-        return {
-          'page_title': page.title,
-          'content': generatedText,
-          'raw_response': generatedText,
-          'parse_warning': 'Could not parse as JSON: $e',
-        };
+        // JSON parsing failed, try text parsing
+        return _parseTextResponse(generatedText, page, template, customPrompt);
       }
     } catch (e) {
       return {
@@ -567,5 +552,124 @@ class OllamaService {
     cancelAllRequests();
     stopBundledOllama();
     _httpClient.close();
+  }
+
+  /// Parse AI text response when JSON parsing fails
+  Map<String, dynamic> _parseTextResponse(String text, OneNotePage page, ExcelTemplate? template, String customPrompt) {
+    final result = <String, dynamic>{
+      'page_title': page.title,
+      'raw_response': text,
+    };
+    
+    // Extract field:value pairs from text like '"Client": "Value"' or 'Client: Value'
+    final fieldPattern = RegExp(r'(?:"?([^":]+)"?\s*:\s*"?([^"\n]+)"?)', caseSensitive: false);
+    final matches = fieldPattern.allMatches(text);
+    
+    final extractedData = <String, String>{};
+    
+    for (final match in matches) {
+      final fieldName = match.group(1)?.trim() ?? '';
+      final fieldValue = match.group(2)?.trim() ?? '';
+      
+      if (fieldName.isNotEmpty && fieldValue.isNotEmpty && fieldValue != 'value') {
+        extractedData[fieldName] = fieldValue;
+      }
+    }
+    
+    // Map extracted data to expected fields using exact matching only
+    final requiredFields = [
+      'Client or company name',
+      'Deal value or pricing',
+      'Sales stage or status',
+      'Contact information',
+      'Next steps or actions',
+      'Closing date'
+    ];
+    
+    for (final expectedField in requiredFields) {
+      result[expectedField] = extractedData[expectedField] ?? '';
+    }
+    
+    return result;
+  }
+
+  /// Extract field names from custom prompt (looks for bullet points with field names)
+  List<String> _extractFieldNamesFromCustomPrompt(String customPrompt) {
+    final fieldNames = <String>[];
+    final lines = customPrompt.split('\n');
+    
+    for (final line in lines) {
+      final trimmed = line.trim();
+      // Look for bullet points or dashes that start field descriptions
+      if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+        final fieldPart = trimmed.substring(2).trim();
+        // Extract the field name (everything before 'or', ':', or common descriptive words)
+        final fieldName = _cleanFieldName(fieldPart);
+        if (fieldName.isNotEmpty && !fieldNames.contains(fieldName)) {
+          fieldNames.add(fieldName);
+        }
+      }
+    }
+    
+    return fieldNames;
+  }
+
+  /// Clean and standardize field names from custom prompt
+  String _cleanFieldName(String rawField) {
+    // Remove descriptive parts after "or" and common words
+    final cleanPatterns = [
+      ' or ',
+      ':',
+      ' - ',
+      ' (',
+      ' details',
+      ' information',
+      ' data',
+    ];
+    
+    String cleaned = rawField.toLowerCase();
+    for (final pattern in cleanPatterns) {
+      final index = cleaned.indexOf(pattern);
+      if (index != -1) {
+        cleaned = cleaned.substring(0, index);
+        break;
+      }
+    }
+    
+    // Capitalize each word
+    return cleaned.split(' ')
+        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .join(' ')
+        .trim();
+  }
+
+  /// Remove duplicate fields with similar meanings
+  Map<String, dynamic> _deduplicateFields(Map<String, dynamic> data) {
+    final result = <String, dynamic>{};
+    final processedKeys = <String>{};
+    
+    for (final entry in data.entries) {
+      final key = entry.key;
+      final normalizedKey = key.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+      
+      // Skip if we've already processed a similar key
+      bool isDuplicate = false;
+      for (final processed in processedKeys) {
+        final processedNormalized = processed.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+        if (normalizedKey == processedNormalized || 
+            (normalizedKey.length > 3 && processedNormalized.length > 3 && 
+             (normalizedKey.contains(processedNormalized) || processedNormalized.contains(normalizedKey)))) {
+          isDuplicate = true;
+          break;
+        }
+      }
+      
+      if (!isDuplicate) {
+        result[key] = entry.value;
+        processedKeys.add(key);
+      }
+    }
+    
+    return result;
   }
 }

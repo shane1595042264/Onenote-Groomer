@@ -158,7 +158,7 @@ class OllamaService {
         }
         
         // SUPER STRICT FILTERING: Only allow EXACT field name matches from the prompt
-        String? matchingPromptField = null;
+        String? matchingPromptField;
         for (final promptField in allowedFields) {
           if (fieldName.trim() == promptField.trim()) {
             matchingPromptField = promptField;

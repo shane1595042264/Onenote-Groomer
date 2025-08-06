@@ -159,7 +159,7 @@ File: $filePath''',
             }
             
             # Method 2: Extract from CDATA sections (fixed regex)
-            \$cdataPattern = '<!\\\[CDATA\\\[([^\\\]]+)\\\]\\\]>'
+            \$cdataPattern = '<!\\[CDATA\\[([^\\]]+)\\]\\]>'
             \$cdataMatches = [regex]::Matches(\$pageXml, \$cdataPattern)
             foreach (\$cdataMatch in \$cdataMatches) {
               \$pageText += \$cdataMatch.Groups[1].Value + " "
@@ -176,7 +176,7 @@ File: $filePath''',
             }
             
             # Clean up the text
-            \$pageText = \$pageText -replace '\s+', ' '
+            \$pageText = \$pageText -replace 's+', ' '
             \$pageText = \$pageText.Trim()
             
             Write-Host "PAGE_START"
@@ -603,7 +603,7 @@ File: $filePath''',
         final fileName = currentFilePath.split('\\').last.split('.').first;
         final possiblePaths = [
           '${fileName}_extracted_business_data.json',
-          'extracted_business_data_${fileName}.json',
+          'extracted_business_data_$fileName.json',
         ];
         
         File? jsonFile;
