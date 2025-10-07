@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'lib/services/onenote_service.dart';
-import 'lib/services/ollama_service.dart';
+import 'lib/services/ollama_service_bundled.dart';
 import 'lib/services/excel_service.dart';
 
 void main() async {
@@ -58,16 +58,16 @@ void main() async {
         
         // Test AI processing with template on first few pages
         print('\n3. Testing AI processing with template...');
-        final ollamaService = OllamaService();
-        
-        // Check if Ollama is running
-        print('Checking Ollama connection...');
-        final isConnected = await ollamaService.checkConnection();
-        if (!isConnected) {
-          print('Ollama is not running. Please start Ollama first.');
-          return;
-        }
-        print('Ollama connected successfully');
+    final ollamaService = OllamaService();
+
+    // Check if Ollama is running
+    print('Checking Ollama connection...');
+    final status = await ollamaService.getOllamaStatus();
+    if (status['isRunning'] != true) {
+      print('Ollama is not running. Please start or bundle Ollama first.');
+      return;
+    }
+    print('Ollama connected successfully');
         
         // Process first 3 pages with template
         final pagesToTest = pages.take(3).toList();

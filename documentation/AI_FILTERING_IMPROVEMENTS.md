@@ -19,7 +19,7 @@ The AI was stuffing massive amounts of template text and boilerplate content int
 ## Solutions Implemented
 
 ### 1. Enhanced `_cleanValue()` Function
-**Location:** `lib/services/ollama_service.dart`
+**Location:** `lib/services/ollama_service_bundled.dart`
 
 **New Features:**
 - **Aggressive Boilerplate Pattern Removal**: 17 regex patterns to detect and remove common template text
@@ -67,7 +67,7 @@ Created test script: `testing/test_improved_ai_filtering.dart`
 - **Readable Output**: Excel cells contain meaningful, concise information
 
 ## Files Modified
-1. `lib/services/ollama_service.dart` - Core AI filtering improvements
+1. `lib/services/ollama_service_bundled.dart` - Core AI filtering improvements
 2. `testing/test_improved_ai_filtering.dart` - New test script
 
 The AI should now produce clean, relevant data extraction instead of dumping template content into Excel cells! 🎯
