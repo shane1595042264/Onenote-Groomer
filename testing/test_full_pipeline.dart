@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'lib/services/onenote_service.dart';
-import 'lib/services/ollama_service.dart';
+import 'lib/services/ollama_service_bundled.dart';
 import 'lib/services/excel_service.dart';
 import 'lib/models/excel_template.dart';
 
@@ -29,6 +29,12 @@ void main() async {
     // Test Ollama service
     print('\n2. Testing Ollama service...');
     final ollamaService = OllamaService();
+
+    final status = await ollamaService.getOllamaStatus();
+    if (status['isRunning'] != true) {
+      print('Ollama is not running. Please start or bundle Ollama before running this test.');
+      return;
+    }
     
     // Create a simple template
     final template = ExcelTemplate(

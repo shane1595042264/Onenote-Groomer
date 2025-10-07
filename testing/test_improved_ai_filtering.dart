@@ -1,6 +1,6 @@
-import 'package:onenote_to_excel/services/onenote_service.dart';
-import 'package:onenote_to_excel/services/ollama_service.dart';
-import 'package:onenote_to_excel/services/excel_service.dart';
+import 'lib/services/onenote_service.dart';
+import 'lib/services/ollama_service_bundled.dart';
+import 'lib/services/excel_service.dart';
 
 void main() async {
   print('Testing improved AI filtering for template content...');
@@ -9,6 +9,12 @@ void main() async {
     // Initialize services
     final oneNoteService = OneNoteService();
     final ollamaService = OllamaService();
+
+    final status = await ollamaService.getOllamaStatus();
+    if (status['isRunning'] != true) {
+      print('Ollama is not running. Please start or bundle Ollama before running this test.');
+      return;
+    }
     final excelService = ExcelService();
     
     print('Loading OneNote pages...');

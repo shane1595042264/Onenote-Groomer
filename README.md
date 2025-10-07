@@ -31,42 +31,31 @@ DocFlow AI is a desktop application that uses AI to extract structured data from
 - **Process Management**: Embedded Ollama service with auto-start
 
 ### Deployment
-- **Packaging**: MSIX for Microsoft Store
-- **Installation**: Self-contained with bundled AI
-- **Distribution**: Microsoft Store ready
-- **Updates**: Store-managed updates
+- **Packaging**: Offline enterprise bundle orchestrated by `packaging/create_enterprise_release.ps1`
+- **Installation**: Self-contained with bundled Ollama runtime and models
+- **Distribution**: Signed ZIP/MSIX-ready artifacts for enterprise software catalogs
+- **Updates**: IT-managed rollouts via Intune, SCCM, or line-of-business delivery
 
 ## 📊 Project Structure
 
 ```
-onenote_to_excel/
+docflow_ai/
 ├── lib/
 │   ├── main.dart             # App entry point
 │   ├── models/               # Data models
-│   │   ├── excel_template.dart
-│   │   └── onenote_page.dart
 │   ├── screens/              # UI screens
-│   │   └── home_screen.dart
-│   ├── services/             # Business logic
-│   │   ├── excel_service.dart
-│   │   ├── ollama_service.dart
-│   │   ├── ollama_service_bundled.dart
-│   │   └── onenote_service.dart
-│   ├── theme/                # Visual theming
-│   │   └── app_theme.dart
+│   ├── services/             # Business logic (Ollama, OneNote, Excel, Word)
+│   ├── theme/                # Visual theming helpers
 │   └── widgets/              # Reusable components
-│       ├── file_drop_zone.dart
-│       ├── processing_status.dart
-│       └── prompt_editor.dart
-├── installer/                # Deployment scripts
-│   ├── create_bundled_installer.ps1
-│   ├── create_msix_package.ps1
-│   └── create_simple_installer.ps1
-├── docs/                     # Documentation
-│   └── PRIVACY_POLICY.md
-└── tests/                    # Testing
-    ├── test_extraction.dart
-    └── test_full_pipeline.dart
+├── packaging/                # Enterprise packaging tooling
+│   ├── README.md
+│   └── create_enterprise_release.ps1
+├── docs/                     # Product documentation
+├── testing/                  # Manual integration scripts
+├── test/                     # Flutter unit/widget tests
+├── windows/                  # Flutter Windows runner scaffolding
+├── pubspec.yaml
+└── README.md
 ```
 
 ## 🔍 Key Technical Challenges & Solutions
@@ -98,15 +87,14 @@ onenote_to_excel/
 - Created intelligent file path handling
 - Built file locking detection and management
 
-### 4. MSIX Packaging for Microsoft Store
-**Challenge**: Creating a compliant Microsoft Store package with bundled AI.
+### 4. Enterprise Packaging Automation
+**Challenge**: Delivering a one-stop installer that embeds the Ollama runtime and large models for air-gapped teams.
 
 **Solution**:
-- Developed custom PowerShell packaging scripts
-- Fixed manifest validation issues
-- Implemented correct publisher identity handling
-- Resolved capability declarations
-- Added proper package signing
+- Added `packaging/create_enterprise_release.ps1` to orchestrate the Flutter build, Ollama download, and model bundling
+- Implemented cached downloads and environment overrides for reproducible builds
+- Generated release manifests with SHA-256 hashes for security and compliance reviews
+- Documented offline workflows so enterprises can pre-seed models without internet access
 
 ### 5. UI/UX Design
 **Challenge**: Creating a professional, user-friendly interface.
@@ -124,7 +112,7 @@ This project involved overcoming several technical hurdles:
 
 1. **Bundling Ollama**: Successfully packaged a 4GB+ AI engine with the app
 2. **Windows SDK Integration**: Resolved SDK tool detection for packaging
-3. **MSIX Manifest Validation**: Fixed complex manifest schema issues
+3. **Enterprise Packaging Pipeline**: Automated offline distribution with bundled Ollama runtime and manifests
 4. **File System Permissions**: Properly declared and handled file access
 5. **Memory Management**: Optimized for processing large documents
 6. **Persistent Storage**: Implemented settings and prompt storage
@@ -165,14 +153,22 @@ See our [Privacy Policy](docs/PRIVACY_POLICY.md) for details.
 
 ## 🚀 Deployment Process
 
-The app uses a sophisticated deployment pipeline:
+The automated enterprise release pipeline executes the following steps:
 
-1. **Build Flutter App**: Compile Windows desktop executable
-2. **Bundle Ollama**: Package AI engine with the app
-3. **Create MSIX**: Generate Microsoft Store package
-4. **Sign Package**: Apply code signing for security
-5. **Prepare Store Assets**: Create icons, screenshots, and listings
-6. **Submit to Store**: Upload through Partner Center
+1. **Build Flutter App** – Compile the Windows desktop runner in release mode.
+2. **Stage Runtime** – Copy the binaries into `dist/DocFlowAI-Enterprise/`.
+3. **Bundle Ollama** – Download the Windows Ollama CLI and embed it beside the app.
+4. **Seed Models** – Pull or copy the `llama2:latest` weights into the portable bundle.
+5. **Generate Manifest** – Emit `RELEASE_MANIFEST.json` with version info and SHA-256 hashes.
+6. **Distribute** – Zip/sign the folder for Intune, SCCM, or other enterprise channels.
+
+Run the automation with:
+
+```powershell
+pwsh ./packaging/create_enterprise_release.ps1 -AllowNetworkModelDownload
+```
+
+For offline environments swap in the `-ModelSourcePath` option described in [`packaging/README.md`](packaging/README.md).
 
 ## 👨‍💻 Development Learnings
 
@@ -181,12 +177,11 @@ Through building OneNote Groomer, I gained experience with:
 - **Cross-platform development** with Flutter for desktop
 - **AI integration** in desktop applications
 - **Local LLM deployment** and optimization
-- **Microsoft Store submission** process
-- **MSIX packaging** and signing
+- **Enterprise release automation** using PowerShell and scripted packaging
 - **Material Design implementation** with custom theming
 - **Document format conversion** techniques
-- **Windows SDK integration** for packaging
-- **Installer script creation** with PowerShell
+- **Windows process orchestration** for background services
+- **Code-signing readiness** and integrity manifest generation
 
 ## 🔍 Future Enhancements
 
