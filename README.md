@@ -1,11 +1,5 @@
 # DocFlow AI
 
-<div align="center">
-  <img src="docs/images/logo.png" alt="DocFlow AI Logo" width="200"/>
-  <br>
-  <em>Transform documents into structured data with AI-powered extraction</em>
-  <br><br>
-</div>
 
 ## 🚀 Project Overview
 
@@ -212,5 +206,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Contact
 
 For questions or feedback, please contact:
-- **Developer**: [Your Name]
-- **Email**: [your.email@example.com]
+- **Developer**: [Juntao Li]
+- **Email**: [shane.juntao.li@gmail.com]
